@@ -1,0 +1,3327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GestorPrest v3 - Sistema de Cobros Avanzado</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #22c55e;
+            --danger: #ef4444;
+            --light: #dde3ff;
+            --dark: #0f0c29;
+            --dark2: #141432;
+            --dark3: #1a1a4e;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --gray: #8b96c8;
+            --heading: #a5b4fc;
+            --heading2: #c084fc;
+            --text-soft: #dde3ff;
+            --text-success-soft: #86efac;
+            --text-danger-soft: #fca5a5;
+        }
+
+        :root[data-theme="light"] {
+            --gray: #64748b;
+            --heading: #4338ca;
+            --heading2: #9333ea;
+            --text-soft: #1e1b3a;
+            --text-success-soft: #15803d;
+            --text-danger-soft: #b91c1c;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #141432 30%, #1a1a4e 60%, #0d0d2b 100%);
+            color: var(--text-soft);
+            min-height: 100vh;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, var(--heading), var(--heading2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--gray);
+            font-size: 0.95em;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            overflow-x: auto;
+            padding: 10px;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+
+        .nav-tabs button {
+            padding: 12px 24px;
+            background: none;
+            border: 1px solid transparent;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .nav-tabs button:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.3);
+            color: var(--heading);
+        }
+
+        .nav-tabs button.active {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--primary);
+            color: var(--heading);
+        }
+
+        .content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .titulo-seccion {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--heading), var(--heading2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.78rem;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-group select option {
+            color: #000000;
+            background: #ffffff;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.15);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .form-group input:read-only {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.08);
+            color: rgba(221, 227, 255, 0.6);
+            cursor: not-allowed;
+        }
+
+        .form-group input:read-only:focus {
+            border-color: rgba(255, 255, 255, 0.08);
+            box-shadow: none;
+        }
+
+        input[type="radio"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+
+        label {
+            cursor: pointer;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.6);
+        }
+
+        .btn-success {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            color: #22c55e;
+        }
+
+        .btn-success:hover {
+            background: rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-sm {
+            padding: 8px 15px;
+            font-size: 0.85em;
+            margin-right: 10px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .metric-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 14px;
+            padding: 18px;
+            transition: transform 0.2s;
+        }
+
+        .metric-container:hover {
+            transform: translateY(-3px);
+        }
+
+        .metric-label {
+            color: var(--gray);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-value {
+            color: #ffffff;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        table thead {
+            background: rgba(99, 102, 241, 0.3);
+        }
+
+        table th {
+            color: #ffffff;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        table td {
+            color: var(--text-soft);
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-activo {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .badge-moroso {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .badge-pagado {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--heading);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+        }
+
+        .card-rojo {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            color: var(--text-danger-soft);
+        }
+
+        .card-verde {
+            background: rgba(34, 197, 94, 0.10);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            color: var(--text-success-soft);
+        }
+
+        .card-amarillo {
+            background: rgba(234, 179, 8, 0.10);
+            border: 1px solid rgba(234, 179, 8, 0.30);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            color: #fcd34d;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(20, 20, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header h2 {
+            font-size: 1.5em;
+            background: linear-gradient(90deg, var(--heading), var(--heading2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--gray);
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #ffffff;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .alert.show {
+            display: block;
+            position: fixed;
+            top: 20px;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            width: 90%;
+            max-width: 500px;
+            z-index: 2000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            color: var(--text-success-soft);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: var(--text-danger-soft);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray);
+        }
+
+        .empty-state h3 {
+            color: var(--heading);
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            color: var(--primary);
+            font-weight: 600;
+            padding: 10px;
+            border-bottom: 2px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            min-height: 100px;
+        }
+
+        .calendar-day-number {
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .calendar-event {
+            background: rgba(34, 197, 94, 0.3);
+            border-left: 2px solid #22c55e;
+            padding: 3px 5px;
+            margin: 2px 0;
+            font-size: 0.7em;
+            border-radius: 3px;
+            color: var(--text-success-soft);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .calendar-event-moroso {
+            background: rgba(239, 68, 68, 0.3);
+            border-left: 2px solid #ef4444;
+            color: var(--text-danger-soft);
+            font-weight: 600;
+        }
+
+        .expander {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .expander-header {
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .expander-header:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .expander-content {
+            display: none;
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .expander.open .expander-content {
+            display: block;
+        }
+
+        .expander-toggle {
+            transition: transform 0.3s;
+            color: var(--gray);
+        }
+
+        .expander.open .expander-toggle {
+            transform: rotate(180deg);
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .calendar-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .nav-tabs {
+                gap: 5px;
+            }
+
+            .nav-tabs button {
+                padding: 10px 15px;
+                font-size: 0.8em;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           MODO CLARO
+           ═══════════════════════════════════════════════════════════ */
+
+        .top-actions {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-toggle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            color: #fcd34d;
+            font-size: 1.4em;
+            cursor: pointer;
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, background 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.08);
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        [data-theme="light"] body {
+            background: linear-gradient(135deg, #f4f6fb 0%, #eef1fb 30%, #e7eaf8 60%, #f7f8fd 100%);
+        }
+
+        [data-theme="light"] header,
+        [data-theme="light"] .nav-tabs,
+        [data-theme="light"] .card-glass,
+        [data-theme="light"] .metric-container,
+        [data-theme="light"] .modal-content,
+        [data-theme="light"] .expander,
+        [data-theme="light"] .calendar-day {
+            background: rgba(255, 255, 255, 0.75);
+            border-color: rgba(15, 23, 42, 0.08);
+        }
+
+        [data-theme="light"] .theme-toggle {
+            background: rgba(15, 23, 42, 0.06);
+            border-color: rgba(15, 23, 42, 0.12);
+            color: #4338ca;
+        }
+
+        [data-theme="light"] .theme-toggle:hover {
+            background: rgba(15, 23, 42, 0.1);
+        }
+
+        .logout-btn {
+            padding: 8px 15px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        [data-theme="light"] .logout-btn {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #dc2626;
+        }
+
+        .sheet-btn {
+            padding: 8px 15px;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            color: #22c55e;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .sheet-btn:hover {
+            background: rgba(34, 197, 94, 0.3);
+        }
+
+        [data-theme="light"] .sheet-btn {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #16a34a;
+        }
+
+        [data-theme="light"] table,
+        [data-theme="light"] .table-responsive {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(15, 23, 42, 0.1);
+        }
+
+        [data-theme="light"] table thead {
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        [data-theme="light"] table th {
+            color: #1e1b3a;
+            border-bottom-color: rgba(15, 23, 42, 0.1);
+        }
+
+        [data-theme="light"] table td {
+            border-bottom-color: rgba(15, 23, 42, 0.06);
+        }
+
+        [data-theme="light"] table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.08);
+        }
+
+        [data-theme="light"] .form-group input,
+        [data-theme="light"] .form-group select,
+        [data-theme="light"] .form-group textarea {
+            background: rgba(15, 23, 42, 0.04);
+            border-color: rgba(15, 23, 42, 0.14);
+            color: #111827;
+        }
+
+        [data-theme="light"] .form-group input:read-only {
+            background: rgba(15, 23, 42, 0.03);
+            border-color: rgba(15, 23, 42, 0.08);
+            color: rgba(30, 27, 58, 0.55);
+        }
+
+        [data-theme="light"] .form-group input:read-only:focus {
+            border-color: rgba(15, 23, 42, 0.08);
+        }
+
+        [data-theme="light"] .metric-value {
+            color: #111827;
+        }
+
+        [data-theme="light"] .close-btn:hover {
+            color: #111827;
+        }
+
+        [data-theme="light"] .nav-tabs button {
+            color: var(--gray);
+        }
+    </style>
+</head>
+<body>
+    <div class="top-actions">
+        <a class="sheet-btn" href="https://docs.google.com/spreadsheets/d/1N29Eja234x0gjvg1yq0F8D-qrehvOH1xoLT3EchkNBE/edit?usp=sharing" target="_blank" rel="noopener noreferrer" title="Abrir hoja de cálculo">📊 Google Sheets</a>
+        <button class="logout-btn" onclick="cerrarSesion()" title="Cerrar sesión">🔒 Cerrar sesión</button>
+        <button class="theme-toggle" id="theme-toggle" onclick="alternarTema()" title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
+    </div>
+    <div class="container">
+        <header>
+            <h1>💼 GERMAN JAIME AYAVIRI MAMANI </h1>
+            <p>Sistema avanzado de gestión de préstamos y cobranzas</p>
+        </header>
+
+        <div class="nav-tabs">
+            <button class="nav-btn active" data-tab="dashboard">📊 INICIO</button>
+            <button class="nav-btn" data-tab="nuevo-prestamo">➕ Nuevo Préstamo</button>
+            <button class="nav-btn" data-tab="prestamos">📋 Préstamos</button>
+            <button class="nav-btn" data-tab="pagos">💵 Registrar Pago</button>
+            <button class="nav-btn" data-tab="calendario">📅 Calendario</button>
+            <button class="nav-btn" data-tab="reportes">📈 Reportes</button>
+            <button class="nav-btn" data-tab="personas">👥 Personas</button>
+            <button class="nav-btn" data-tab="configuracion">⚙️ Configuración</button>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <!-- DASHBOARD -->
+        <div class="content active" id="dashboard">
+            <div class="titulo-seccion">📊 RESUMEN</div>
+
+            <div class="metrics-grid" id="metrics-dashboard">
+                <div class="metric-container">
+                    <div class="metric-label">Préstamos Activos</div>
+                    <div class="metric-value" id="metric-activos">0</div>
+                </div>
+                <div class="metric-container">
+                    <div class="metric-label">Total Prestado</div>
+                    <div class="metric-value" id="metric-total-prestado">Bs. 0</div>
+                </div>
+                <div class="metric-container">
+                    <div class="metric-label">A Cobrar (Sin Mora)</div>
+                    <div class="metric-value" id="metric-a-cobrar">Bs. 0</div>
+                </div>
+                <div class="metric-container">
+                    <div class="metric-label">Mora Acumulada</div>
+                    <div class="metric-value" id="metric-mora">Bs. 0</div>
+                </div>
+                <div class="metric-container">
+                    <div class="metric-label">Deudores Morosos</div>
+                    <div class="metric-value" id="metric-morosos">0</div>
+                </div>
+                <div class="metric-container">
+                    <div class="metric-label">Total Cobrado</div>
+                    <div class="metric-value" id="metric-cobrado">Bs. 0</div>
+                </div>
+            </div>
+
+            <div class="card-glass">
+                <h3 style="color: var(--heading); margin-bottom: 20px;">⚠️ Próximos Vencimientos (7 días)</h3>
+                <div class="table-responsive" id="upcoming-container">
+                    <div class="empty-state">
+                        <h3>Sin vencimientos próximos</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-glass">
+                <h3 style="color: #ef4444; margin-bottom: 20px;">🚨 Deudores Morosos</h3>
+                <div class="table-responsive" id="morosos-container">
+                    <div class="empty-state">
+                        <h3>¡Sin deudores morosos!</h3>
+                        <p>Excelente, todos están al día 🎉</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NUEVO PRÉSTAMO -->
+        <div class="content" id="nuevo-prestamo">
+            <div class="titulo-seccion">➕ Nuevo Préstamo</div>
+            <div class="card-glass">
+                <form id="form-prestamo">
+                    <!-- PRESTATARIO -->
+                    <h3 style="color: #22c55e; margin: 20px 0 15px 0;">👤 Prestatario (quien recibe el dinero)</h3>
+                    
+                    <div style="display: flex; gap: 30px; margin-bottom: 20px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--gray);">
+                            <input type="radio" name="tipo-prestatario" value="existente" checked onchange="togglePrestatarioOption()">
+                            <span>Seleccionar existente</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--gray);">
+                            <input type="radio" name="tipo-prestatario" value="nuevo" onchange="togglePrestatarioOption()">
+                            <span>Crear nuevo</span>
+                        </label>
+                    </div>
+
+                    <!-- Selector existente -->
+                    <div id="selector-prestatario-existente">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Seleccionar Prestatario *</label>
+                                <select id="select-prestatario-existente" required>
+                                    <option value="">-- Seleccionar --</option>
+                                </select>
+                                <div id="mensaje-no-prestatarios" style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 8px; padding: 12px; color: #fcd34d; margin-top: 10px; display: none;">
+                                    No hay prestatarios. Selecciona "Crear nuevo" para registrar uno.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulario nuevo -->
+                    <div id="formulario-prestatario-nuevo" style="display: none;">
+                        <div class="card-glass" style="background: rgba(34, 197, 94, 0.1); border-left: 3px solid #22c55e; margin-bottom: 15px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nombre *</label>
+                                    <input type="text" id="prest-nombre">
+                                </div>
+                                <div class="form-group">
+                                    <label>Teléfono</label>
+                                    <input type="tel" id="prest-telefono">
+                                </div>
+                                <div class="form-group">
+                                    <label>CI/Cédula</label>
+                                    <input type="text" id="prest-ci">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Dirección</label>
+                                    <input type="text" id="prest-direccion">
+                                </div>
+                                <div class="form-group">
+                                    <label>Ubicación/Barrio</label>
+                                    <input type="text" id="prest-ubicacion">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GARANTE -->
+                    <h3 style="color: var(--heading); margin: 25px 0 15px 0;">🛡️ Garante (Opcional)</h3>
+                    
+                    <div style="display: flex; gap: 30px; margin-bottom: 20px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--gray);">
+                            <input type="radio" name="tipo-garante" value="sin-garante" checked onchange="toggleGaranteOption()">
+                            <span>Sin garante</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--gray);">
+                            <input type="radio" name="tipo-garante" value="con-garante" onchange="toggleGaranteOption()">
+                            <span>Agregar garante</span>
+                        </label>
+                    </div>
+
+                    <div id="formulario-garante" style="display: none;">
+                        <div class="card-glass" style="background: rgba(139, 92, 246, 0.1); border-left: 3px solid #8b5cf6; margin-bottom: 15px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nombre Garante</label>
+                                    <input type="text" id="gar-nombre">
+                                </div>
+                                <div class="form-group">
+                                    <label>Teléfono Garante</label>
+                                    <input type="tel" id="gar-telefono">
+                                </div>
+                                <div class="form-group">
+                                    <label>Dirección Garante</label>
+                                    <input type="text" id="gar-direccion">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PRESTAMISTA -->
+                    <h3 style="color: #8b5cf6; margin: 25px 0 15px 0;">🏦 Prestamista (dueño del capital)</h3>
+                    
+                    <div style="display: flex; gap: 30px; margin-bottom: 20px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--gray);">
+                            <input type="radio" name="tipo-prestamista" value="existente" checked onchange="togglePrestamisustaOption()">
+                            <span>Seleccionar existente</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--gray);">
+                            <input type="radio" name="tipo-prestamista" value="nuevo" onchange="togglePrestamisustaOption()">
+                            <span>Registrar nuevo</span>
+                        </label>
+                    </div>
+
+                    <!-- Selector prestamista existente -->
+                    <div id="selector-prestamista-existente">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Prestamista *</label>
+                                <select id="select-prestamista-existente" required>
+                                    <option value="">-- Seleccionar --</option>
+                                </select>
+                                <div id="mensaje-no-prestamistas" style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 8px; padding: 12px; color: #fcd34d; margin-top: 10px; display: none;">
+                                    No hay prestamistas. Selecciona "Registrar nuevo".
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulario prestamista nuevo -->
+                    <div id="formulario-prestamista-nuevo" style="display: none;">
+                        <div class="card-glass" style="background: rgba(139, 92, 246, 0.1); border-left: 3px solid #8b5cf6; margin-bottom: 15px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nombre Prestamista *</label>
+                                    <input type="text" id="prest-prestamista-nombre">
+                                </div>
+                                <div class="form-group">
+                                    <label>Teléfono</label>
+                                    <input type="tel" id="prest-prestamista-tel">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Notas</label>
+                                    <textarea id="prest-prestamista-notas"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONDICIONES DEL PRÉSTAMO -->
+                    <h3 style="color: #6366f1; margin: 25px 0 15px 0;">💰 Condiciones del Préstamo</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Monto (Bs) *</label>
+                            <input type="number" id="prest-monto" required min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Interés Mensual (%) *</label>
+                            <input type="number" id="prest-interes" required min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha de Inicio *</label>
+                            <input type="date" id="prest-fecha-inicio" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fecha Primer Pago *</label>
+                            <input type="date" id="prest-fecha" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Notas/Observaciones</label>
+                            <textarea id="prest-notas"></textarea>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                        ✅ Crear Préstamo
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- PRESTAMOS -->
+        <div class="content" id="prestamos">
+            <div class="titulo-seccion">📋 Préstamos</div>
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-success btn-sm" onclick="filtrarPrestamos('todos')">Todos</button>
+                <button class="btn btn-success btn-sm" onclick="filtrarPrestamos('activos')">Activos</button>
+                <button class="btn btn-success btn-sm" onclick="filtrarPrestamos('pagados')">Pagados</button>
+            </div>
+            <div id="prestamos-container"></div>
+        </div>
+
+        <!-- PAGOS -->
+        <div class="content" id="pagos">
+            <div class="titulo-seccion">💵 Registrar Pago</div>
+            <div class="card-glass">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Seleccionar Préstamo *</label>
+                        <select id="pago-prestamo" onchange="cargarDetallePrestamo()">
+                            <option value="">-- Seleccionar --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="pago-detalles" style="display: none;">
+                    <div class="card-glass" style="background: rgba(34, 197, 94, 0.1); margin-bottom: 20px;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Prestatario</label>
+                                <input type="text" id="pago-prestatario" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Capital Pendiente</label>
+                                <input type="text" id="pago-capital" readonly style="color: #22c55e; font-weight: bold;">
+                            </div>
+                            <div class="form-group">
+                                <label>Interés Mensual</label>
+                                <input type="text" id="pago-interes" readonly style="color: #8b5cf6; font-weight: bold;">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Interés Moratorio</label>
+                                <input type="text" id="pago-mora" readonly style="color: #ef4444; font-weight: bold;">
+                            </div>
+                            <div class="form-group">
+                                <label>Total a Cobrar</label>
+                                <input type="text" id="pago-total" readonly style="color: #fcd34d; font-weight: bold;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 style="color: var(--heading); margin: 20px 0 15px 0;">Datos del Pago</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tipo de Pago *</label>
+                            <select id="pago-tipo" required onchange="actualizarPreviewPago()">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="interes">Solo Interés Mensual (pago completo)</option>
+                                <option value="interes-parcial">Pago Parcial de Interés (a cuenta)</option>
+                                <option value="interes-capital">Interés + Capital</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Monto a Pagar (Bs) *</label>
+                            <input type="number" id="pago-monto" min="0" step="0.01" required oninput="actualizarPreviewPago()">
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha de Pago *</label>
+                            <input type="date" id="pago-fecha" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Método de Pago</label>
+                            <select id="pago-metodo">
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="cheque">Cheque</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Notas</label>
+                            <input type="text" id="pago-notas">
+                        </div>
+                    </div>
+
+                    <div class="card-amarillo" id="preview-pago-parcial" style="display: none; margin-bottom: 15px;"></div>
+
+                    <div class="card-amarillo" id="validacion-pago" style="display: none;"></div>
+
+                    <button type="button" class="btn btn-primary" onclick="procesarPago()" style="width: 100%; margin-top: 20px;">
+                        ✅ Registrar Pago
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-glass" style="margin-top: 40px;">
+                <h3 style="color: var(--heading); margin-bottom: 20px;">📜 Historial de Pagos</h3>
+                <div class="table-responsive" id="historial-pagos">
+                    <div class="empty-state">
+                        <h3>Sin pagos registrados</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CALENDARIO -->
+        <div class="content" id="calendario">
+            <div class="titulo-seccion">📅 Calendario de Pagos</div>
+            <div class="card-glass">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 id="calendario-titulo" style="color: var(--heading); margin: 0;"></h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-success btn-sm" onclick="mesAnterior()">← Anterior</button>
+                        <button class="btn btn-success btn-sm" onclick="mesActual()">Hoy</button>
+                        <button class="btn btn-success btn-sm" onclick="mesSiguiente()">Siguiente →</button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 20px;">
+                    <div class="calendar-day-header">Lun</div>
+                    <div class="calendar-day-header">Mar</div>
+                    <div class="calendar-day-header">Mié</div>
+                    <div class="calendar-day-header">Jue</div>
+                    <div class="calendar-day-header">Vie</div>
+                    <div class="calendar-day-header">Sáb</div>
+                    <div class="calendar-day-header">Dom</div>
+                </div>
+
+                <div class="calendar-grid" id="calendario-grid"></div>
+            </div>
+        </div>
+
+        <!-- REPORTES -->
+        <div class="content" id="reportes">
+            <div class="titulo-seccion">📈 Reportes</div>
+
+            <div class="metrics-grid">
+                <div class="metric-container">
+                    <div class="metric-label">Préstamos Completados</div>
+                    <div class="metric-value" id="report-completados">0</div>
+                </div>
+                <div class="metric-container">
+                    <div class="metric-label">Total Cobrado</div>
+                    <div class="metric-value" id="report-cobrado">Bs. 0</div>
+                </div>
+                <div class="metric-container">
+                    <div class="metric-label">Interés Cobrado</div>
+                    <div class="metric-value" id="report-interes">Bs. 0</div>
+                </div>
+                <div class="metric-container">
+                    <div class="metric-label">Mora Cobrada</div>
+                    <div class="metric-value" id="report-mora">Bs. 0</div>
+                </div>
+            </div>
+
+            <div class="card-glass">
+                <h3 style="color: var(--heading); margin-bottom: 20px;">💼 Préstamos por Prestamista</h3>
+                <div class="table-responsive" id="report-prestamistas">
+                    <div class="empty-state">
+                        <h3>Sin datos</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-glass">
+                <h3 style="color: #ef4444; margin-bottom: 20px;">⚠️ Top 10 Deudores (Mayor Deuda)</h3>
+                <div class="table-responsive" id="report-top-deudores">
+                    <div class="empty-state">
+                        <h3>Sin deudores</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PERSONAS -->
+        <div class="content" id="personas">
+            <div class="titulo-seccion">👥 Prestatarios y Prestamistas</div>
+
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: var(--heading); margin-bottom: 15px;">📋 Prestatarios</h3>
+                <div id="prestatarios-container"></div>
+            </div>
+
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: var(--heading); margin-bottom: 15px;">🏦 Prestamistas</h3>
+                <div id="prestamistas-container"></div>
+            </div>
+        </div>
+
+        <!-- CONFIGURACIÓN -->
+        <div class="content" id="configuracion">
+            <div class="titulo-seccion">⚙️ Configuración</div>
+
+            <div class="card-glass">
+                <h3 style="color: var(--heading); margin-bottom: 20px;">⚡ Interés Moratorio</h3>
+                <p style="color: var(--gray); margin-bottom: 20px; font-size: 0.9em;">
+                    El interés moratorio se aplica automáticamente cuando un préstamo está vencido
+                    y han transcurrido los días de gracia. Se calcula sobre el saldo de capital pendiente.
+                </p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Activar Interés Moratorio</label>
+                        <select id="config-mora-activa">
+                            <option value="1">Activado</option>
+                            <option value="0">Desactivado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tasa Moratorio (% diario)</label>
+                        <input type="number" id="config-mora-tasa" min="0.01" max="5" step="0.01" value="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Días de Gracia</label>
+                        <input type="number" id="config-mora-dias" min="0" max="30" value="3">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="guardarConfig()">💾 Guardar Configuración</button>
+            </div>
+
+            <div class="card-glass">
+                <h3 style="color: var(--heading); margin-bottom: 20px;">📥 Nuevo Prestamista</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre *</label>
+                        <input type="text" id="config-prest-nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="config-prest-tel">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Notas</label>
+                        <textarea id="config-prest-notas"></textarea>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="crearPrestamista()">➕ Crear Prestamista</button>
+            </div>
+
+            <div class="card-glass">
+                <h3 style="color: var(--heading); margin-bottom: 20px;">👤 Nuevo Prestatario</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre *</label>
+                        <input type="text" id="config-prestatario-nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="config-prestatario-tel">
+                    </div>
+                    <div class="form-group">
+                        <label>CI/Cédula</label>
+                        <input type="text" id="config-prestatario-ci">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Dirección</label>
+                        <input type="text" id="config-prestatario-direccion">
+                    </div>
+                    <div class="form-group">
+                        <label>Ubicación/Barrio</label>
+                        <input type="text" id="config-prestatario-ubicacion">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="crearPrestatarioDesdeConfig()">➕ Crear Prestatario</button>
+            </div>
+
+            <div class="card-glass">
+                <h3 style="color: var(--heading); margin-bottom: 20px;">👥 Prestatarios Registrados</h3>
+                <div class="table-responsive" id="lista-prestatarios-container"></div>
+            </div>
+
+            <div class="card-glass">
+                <h3 style="color: var(--heading); margin-bottom: 20px;">🏦 Prestamistas Registrados</h3>
+                <div class="table-responsive" id="lista-prestamistas-container"></div>
+            </div>
+
+            <div class="card-glass">
+                <h3 style="color: var(--heading); margin-bottom: 20px;">📋 Información del Sistema</h3>
+                <p style="color: var(--gray);">
+                    <strong>GestorPrest v3.0</strong><br>
+                    Sistema de Gestión de Préstamos<br>
+                    Moneda: Bolivianos (Bs.)<br>
+                    Almacenamiento: Navegador Local (IndexedDB/LocalStorage)<br>
+                    <br>
+                    Todos los datos se guardan localmente en tu navegador.
+                </p>
+
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-danger" onclick="exportarDatos()">📥 Descargar Datos (JSON)</button>
+                    <button class="btn btn-primary" style="margin-left: 10px;" onclick="limpiarDatos()">🗑️ Limpiar Todo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALLE PRÉSTAMO -->
+    <div class="modal" id="modal-detalle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalles del Préstamo</h2>
+                <button class="close-btn" onclick="cerrarModal()">×</button>
+            </div>
+            <div id="modal-body"></div>
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn btn-success btn-sm" onclick="abrirPago()">💵 Registrar Pago</button>
+                <button class="btn btn-danger btn-sm" onclick="eliminarPrestamo()">🗑️ Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR PERSONA (PRESTATARIO/PRESTAMISTA) -->
+    <div class="modal" id="modal-persona">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-persona-titulo">Editar</h2>
+                <button class="close-btn" onclick="cerrarModalPersona()">×</button>
+            </div>
+            <div id="modal-persona-body"></div>
+            <button type="button" class="btn btn-primary" onclick="guardarEdicionPersona()" style="width: 100%; margin-top: 20px;">💾 Guardar Cambios</button>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR PAGO -->
+    <div class="modal" id="modal-editar-pago">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Pago</h2>
+                <button class="close-btn" onclick="cerrarModalEditarPago()">×</button>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Monto Pagado (Bs) *</label>
+                    <input type="number" id="edit-pago-monto" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Pago *</label>
+                    <input type="date" id="edit-pago-fecha">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Método de Pago</label>
+                    <select id="edit-pago-metodo">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notas</label>
+                    <input type="text" id="edit-pago-notas">
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="guardarEdicionPago()" style="width: 100%; margin-top: 20px;">💾 Guardar Cambios</button>
+        </div>
+    </div>
+
+    <!-- MODAL HISTORIAL DE PAGOS POR CLIENTE -->
+    <div class="modal" id="modal-historial-cliente">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2 id="modal-historial-cliente-titulo">Historial de Pagos</h2>
+                <button class="close-btn" onclick="cerrarModalHistorialCliente()">×</button>
+            </div>
+            <div id="modal-historial-cliente-body"></div>
+            <button type="button" class="btn btn-danger" onclick="exportarHistorialClientePDF()" style="width: 100%; margin-top: 20px;">📄 Exportar a PDF</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════════
+        // TEMA CLARO / OSCURO
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        const TEMA_KEY = 'gestorprest_tema';
+
+        function aplicarTema(tema) {
+            document.documentElement.setAttribute('data-theme', tema);
+            document.getElementById('theme-toggle').textContent = tema === 'light' ? '☀️' : '🌙';
+            localStorage.setItem(TEMA_KEY, tema);
+        }
+
+        function alternarTema() {
+            const actual = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+            aplicarTema(actual === 'light' ? 'dark' : 'light');
+        }
+
+        aplicarTema(localStorage.getItem(TEMA_KEY) === 'light' ? 'light' : 'dark');
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CIERRE DE SESIÓN
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        function cerrarSesion() {
+            if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) return;
+            localStorage.removeItem('gestorprest_session_v3');
+            window.location.href = 'index.html';
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // GESTIÓN DE DATOS - LocalStorage
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        const DB_KEY = 'gestorprest_db_v3';
+        let prestamoActual = null;
+        let mesActualMostrado = new Date();
+        let filtroActual = 'todos';
+
+        function getDB() {
+            const db = localStorage.getItem(DB_KEY);
+            if (!db) {
+                const newDB = {
+                    prestamos: [],
+                    prestatarios: [],
+                    prestamistas: [],
+                    pagos: [],
+                    config: {
+                        mora_activa: '1',
+                        mora_tasa_diaria_pct: '0.1',
+                        mora_dias_gracia: '3'
+                    }
+                };
+                localStorage.setItem(DB_KEY, JSON.stringify(newDB));
+                return newDB;
+            }
+            return JSON.parse(db);
+        }
+
+        function saveDB(db) {
+            localStorage.setItem(DB_KEY, JSON.stringify(db));
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // INTEGRACIÓN CON GOOGLE SHEETS (respaldo en la nube)
+        //
+        // localStorage sigue siendo la fuente de datos de la app: todo funciona igual
+        // aunque falle o esté desconectado el respaldo. Cada creación (prestamista,
+        // prestatario, préstamo, pago) también se envía a la hoja de cálculo.
+        // NOTA: esto es solo un respaldo de un sentido (local → Sheets). Editar o
+        // eliminar registros NO se refleja en la hoja porque el Apps Script actual
+        // no tiene acciones para eso.
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzW-o6-M31yGmpeZA2Nu8i0E9J3Y6IVY8Lslc9FhIfujXl_5QDGN0gui3NnN6RBLDsN/exec";
+        const USAR_GOOGLE_SHEETS = true;
+
+        async function enviarAGoogleSheets(payload) {
+            if (!USAR_GOOGLE_SHEETS) return null;
+
+            try {
+                const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('❌ Error de conexión con Google Sheets:', error);
+                return null;
+            }
+        }
+
+        async function guardarPrestamista_Google(nombre, telefono, notas) {
+            const resultado = await enviarAGoogleSheets({
+                accion: 'guardarPrestamista',
+                nombre,
+                telefono: telefono || '',
+                nota: notas || ''
+            });
+            if (resultado && (resultado.exito || resultado.id)) {
+                console.log('✅ Prestamista respaldado en Google Sheets');
+            } else if (resultado) {
+                console.error('❌ Error al respaldar prestamista:', resultado.error);
+            }
+        }
+
+        async function guardarPrestatario_Google(nombre, telefono, ci, direccion, ubicacion) {
+            const resultado = await enviarAGoogleSheets({
+                accion: 'guardarPrestatario',
+                nombre,
+                telefono: telefono || '',
+                ci: ci || '',
+                direccion: direccion || '',
+                ubicacion: ubicacion || ''
+            });
+            if (resultado && (resultado.exito || resultado.id)) {
+                console.log('✅ Prestatario respaldado en Google Sheets');
+            } else if (resultado) {
+                console.error('❌ Error al respaldar prestatario:', resultado.error);
+            }
+        }
+
+        async function guardarPrestamo_Google(datos) {
+            const resultado = await enviarAGoogleSheets({
+                accion: 'guardarPrestamo',
+                nombre: datos.nombrePrestatario || 'Usuario',
+                monto: datos.monto,
+                interes: datos.interes,
+                tiempo: datos.tiempo || '',
+                fechaInicio: datos.fechaInicio,
+                fechaProximoPago: datos.fechaProximoPago
+            });
+            if (resultado && (resultado.exito || resultado.id)) {
+                console.log('✅ Préstamo respaldado en Google Sheets');
+            } else if (resultado) {
+                console.error('❌ Error al respaldar préstamo:', resultado.error);
+            }
+        }
+
+        async function guardarPago_Google(prestamoId, prestatario, monto, fechaPago) {
+            const resultado = await enviarAGoogleSheets({
+                accion: 'guardarPago',
+                prestamoId,
+                prestatario,
+                montoAPagar: monto,
+                estado: 'Pagado',
+                fechaPago,
+                montoPagado: monto
+            });
+            if (resultado && (resultado.exito || resultado.mensaje)) {
+                console.log('✅ Pago respaldado en Google Sheets');
+            } else if (resultado) {
+                console.error('❌ Error al respaldar pago:', resultado.error);
+            }
+        }
+
+        async function verificarConexionGoogleSheets() {
+            if (!USAR_GOOGLE_SHEETS) {
+                console.log('⚠️ Respaldo en Google Sheets desactivado.');
+                return;
+            }
+            const resultado = await enviarAGoogleSheets({ accion: 'obtenerPrestamistas' });
+            if (resultado) {
+                console.log('✅ Conexión con Google Sheets verificada');
+            } else {
+                console.warn('⚠️ No se pudo conectar con Google Sheets. Revisa que el Apps Script esté implementado con acceso "Cualquier usuario".');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // NAVEGACIÓN Y UI
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tab = this.getAttribute('data-tab');
+                switchTab(tab);
+            });
+        });
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            if (tabName === 'dashboard') {
+                actualizarDashboard();
+            } else if (tabName === 'prestamos') {
+                cargarPrestamos(filtroActual);
+            } else if (tabName === 'calendario') {
+                renderizarCalendario();
+            } else if (tabName === 'reportes') {
+                cargarReportes();
+            } else if (tabName === 'personas') {
+                cargarPersonas();
+            }
+        }
+
+        function showAlert(msg, type = 'success') {
+            const alert = document.getElementById('alert');
+            alert.textContent = msg;
+            alert.className = `alert show alert-${type}`;
+            setTimeout(() => alert.classList.remove('show'), 4000);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CÁLCULOS DE INTERÉS Y MORA
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        function calcularInteresRegular(capital, tasaMensual) {
+            return (capital * tasaMensual) / 100;
+        }
+
+        function calcularInteresAdeudado(prestamo) {
+            return calcularInteresRegular(prestamo.capital_pendiente, prestamo.tasa_interes_mensual) + (prestamo.interes_acumulado || 0);
+        }
+
+        function calcularMora(capital, tasaDiaria, diasDeAtraso, diasGracia) {
+            if (diasDeAtraso <= diasGracia) return 0;
+            const diasMora = diasDeAtraso - diasGracia;
+            return (capital * tasaDiaria * diasMora) / 100;
+        }
+
+        function getDiasDeAtraso(fecha) {
+            const hoy = new Date();
+            const fecVenc = new Date(fecha);
+            return Math.floor((hoy - fecVenc) / (1000 * 60 * 60 * 24));
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // OPERACIONES CON PRÉSTAMOS
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        function crearPrestamo(datos) {
+            const db = getDB();
+
+            const newPrestamo = {
+                id: Date.now(),
+                prestatario_id: datos.prestatario_id,
+                prestamista_id: datos.prestamista_id,
+                monto_original: parseFloat(datos.monto),
+                capital_pendiente: parseFloat(datos.monto),
+                tasa_interes_mensual: parseFloat(datos.interes),
+                fecha_inicio: datos.fecha_inicio || new Date().toISOString().split('T')[0],
+                fecha_proximo_pago: datos.fecha,
+                estado: 'activo',
+                interes_acumulado: 0,
+                notas: datos.notas,
+                garantia_nombre: datos.gar_nombre || '',
+                garantia_telefono: datos.gar_telefono || '',
+                garantia_direccion: datos.gar_direccion || ''
+            };
+
+            db.prestamos.push(newPrestamo);
+            saveDB(db);
+
+            const prestatarioDelPrestamo = db.prestatarios.find(p => p.id === newPrestamo.prestatario_id);
+            guardarPrestamo_Google({
+                nombrePrestatario: prestatarioDelPrestamo ? prestatarioDelPrestamo.nombre : 'Usuario',
+                monto: newPrestamo.monto_original,
+                interes: newPrestamo.tasa_interes_mensual,
+                fechaInicio: newPrestamo.fecha_inicio,
+                fechaProximoPago: newPrestamo.fecha_proximo_pago
+            });
+
+            return newPrestamo.id;
+        }
+
+        function crearPrestatario(datos) {
+            const db = getDB();
+            const id = Date.now();
+
+            db.prestatarios.push({
+                id,
+                nombre: datos.nombre,
+                telefono: datos.telefono,
+                ci: datos.ci,
+                direccion: datos.direccion,
+                ubicacion: datos.ubicacion
+            });
+
+            saveDB(db);
+            guardarPrestatario_Google(datos.nombre, datos.telefono, datos.ci, datos.direccion, datos.ubicacion);
+            return id;
+        }
+
+        function crearPrestamista() {
+            const db = getDB();
+            const nombre = document.getElementById('config-prest-nombre').value.trim();
+            const tel = document.getElementById('config-prest-tel').value.trim();
+            const notas = document.getElementById('config-prest-notas').value.trim();
+
+            if (!nombre) {
+                showAlert('El nombre del prestamista es obligatorio', 'error');
+                return;
+            }
+
+            db.prestamistas.push({
+                id: Date.now(),
+                nombre,
+                telefono: tel,
+                notas
+            });
+
+            saveDB(db);
+            guardarPrestamista_Google(nombre, tel, notas);
+            showAlert(`✅ Prestamista "${nombre}" creado`);
+
+            document.getElementById('config-prest-nombre').value = '';
+            document.getElementById('config-prest-tel').value = '';
+            document.getElementById('config-prest-notas').value = '';
+
+            cargarSelectPrestamistas();
+            cargarListaPrestamistas();
+        }
+
+        function crearPrestatarioDesdeConfig() {
+            const nombre = document.getElementById('config-prestatario-nombre').value.trim();
+
+            if (!nombre) {
+                showAlert('El nombre del prestatario es obligatorio', 'error');
+                return;
+            }
+
+            crearPrestatario({
+                nombre,
+                telefono: document.getElementById('config-prestatario-tel').value.trim(),
+                ci: document.getElementById('config-prestatario-ci').value.trim(),
+                direccion: document.getElementById('config-prestatario-direccion').value.trim(),
+                ubicacion: document.getElementById('config-prestatario-ubicacion').value.trim()
+            });
+
+            showAlert(`✅ Prestatario "${nombre}" creado`);
+
+            document.getElementById('config-prestatario-nombre').value = '';
+            document.getElementById('config-prestatario-tel').value = '';
+            document.getElementById('config-prestatario-ci').value = '';
+            document.getElementById('config-prestatario-direccion').value = '';
+            document.getElementById('config-prestatario-ubicacion').value = '';
+
+            cargarSelectPrestatarios();
+            cargarListaPrestatarios();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // EDITAR / ELIMINAR PRESTATARIOS Y PRESTAMISTAS
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        let personaEditActual = null;
+
+        function cargarListaPrestatarios() {
+            const db = getDB();
+            const container = document.getElementById('lista-prestatarios-container');
+
+            if (db.prestatarios.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>Sin prestatarios registrados</h3></div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Nombre</th><th>Teléfono</th><th>CI</th><th>Ubicación</th><th>Acciones</th></tr></thead><tbody>';
+            db.prestatarios.forEach(p => {
+                html += `
+                    <tr>
+                        <td>${p.nombre}</td>
+                        <td>${p.telefono || '—'}</td>
+                        <td>${p.ci || '—'}</td>
+                        <td>${p.ubicacion || '—'}</td>
+                        <td>
+                            <div class="btn-group" style="margin-top: 0;">
+                                <button class="btn btn-success btn-sm" onclick="abrirHistorialCliente(${p.id})">📜 Historial</button>
+                                <button class="btn btn-success btn-sm" onclick="abrirEditarPrestatario(${p.id})">✏️ Editar</button>
+                                <button class="btn btn-danger btn-sm" onclick="eliminarPrestatario(${p.id})">🗑️ Eliminar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function cargarListaPrestamistas() {
+            const db = getDB();
+            const container = document.getElementById('lista-prestamistas-container');
+
+            if (db.prestamistas.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>Sin prestamistas registrados</h3></div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Notas</th><th>Acciones</th></tr></thead><tbody>';
+            db.prestamistas.forEach(p => {
+                html += `
+                    <tr>
+                        <td>${p.nombre}</td>
+                        <td>${p.telefono || '—'}</td>
+                        <td>${p.notas || '—'}</td>
+                        <td>
+                            <div class="btn-group" style="margin-top: 0;">
+                                <button class="btn btn-success btn-sm" onclick="abrirEditarPrestamista(${p.id})">✏️ Editar</button>
+                                <button class="btn btn-danger btn-sm" onclick="eliminarPrestamista(${p.id})">🗑️ Eliminar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function abrirEditarPrestatario(id) {
+            const db = getDB();
+            const p = db.prestatarios.find(x => x.id === id);
+            if (!p) return;
+
+            personaEditActual = { tipo: 'prestatario', id };
+            document.getElementById('modal-persona-titulo').textContent = 'Editar Prestatario';
+            document.getElementById('modal-persona-body').innerHTML = `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre *</label>
+                        <input type="text" id="edit-nombre" value="${p.nombre}">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="edit-telefono" value="${p.telefono || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>CI/Cédula</label>
+                        <input type="text" id="edit-ci" value="${p.ci || ''}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Dirección</label>
+                        <input type="text" id="edit-direccion" value="${p.direccion || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Ubicación/Barrio</label>
+                        <input type="text" id="edit-ubicacion" value="${p.ubicacion || ''}">
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-persona').classList.add('active');
+        }
+
+        function abrirEditarPrestamista(id) {
+            const db = getDB();
+            const p = db.prestamistas.find(x => x.id === id);
+            if (!p) return;
+
+            personaEditActual = { tipo: 'prestamista', id };
+            document.getElementById('modal-persona-titulo').textContent = 'Editar Prestamista';
+            document.getElementById('modal-persona-body').innerHTML = `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre *</label>
+                        <input type="text" id="edit-nombre" value="${p.nombre}">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="edit-telefono" value="${p.telefono || ''}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Notas</label>
+                        <textarea id="edit-notas">${p.notas || ''}</textarea>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-persona').classList.add('active');
+        }
+
+        function cerrarModalPersona() {
+            document.getElementById('modal-persona').classList.remove('active');
+            personaEditActual = null;
+        }
+
+        function guardarEdicionPersona() {
+            if (!personaEditActual) return;
+
+            const nombre = document.getElementById('edit-nombre').value.trim();
+            if (!nombre) {
+                showAlert('El nombre es obligatorio', 'error');
+                return;
+            }
+
+            const db = getDB();
+
+            if (personaEditActual.tipo === 'prestatario') {
+                const p = db.prestatarios.find(x => x.id === personaEditActual.id);
+                if (!p) return;
+                p.nombre = nombre;
+                p.telefono = document.getElementById('edit-telefono').value.trim();
+                p.ci = document.getElementById('edit-ci').value.trim();
+                p.direccion = document.getElementById('edit-direccion').value.trim();
+                p.ubicacion = document.getElementById('edit-ubicacion').value.trim();
+                saveDB(db);
+                cargarSelectPrestatarios();
+                cargarListaPrestatarios();
+                cargarPrestamos(filtroActual);
+            } else {
+                const p = db.prestamistas.find(x => x.id === personaEditActual.id);
+                if (!p) return;
+                p.nombre = nombre;
+                p.telefono = document.getElementById('edit-telefono').value.trim();
+                p.notas = document.getElementById('edit-notas').value.trim();
+                saveDB(db);
+                cargarSelectPrestamistas();
+                cargarListaPrestamistas();
+                cargarPrestamos(filtroActual);
+            }
+
+            showAlert('✅ Cambios guardados');
+            cerrarModalPersona();
+        }
+
+        function eliminarPrestatario(id) {
+            const db = getDB();
+            const enUso = db.prestamos.some(p => p.prestatario_id === id);
+            if (enUso) {
+                showAlert('No se puede eliminar: este prestatario tiene préstamos registrados', 'error');
+                return;
+            }
+
+            const p = db.prestatarios.find(x => x.id === id);
+            if (!p) return;
+            if (!confirm(`¿Eliminar a "${p.nombre}"?`)) return;
+
+            db.prestatarios = db.prestatarios.filter(x => x.id !== id);
+            saveDB(db);
+            showAlert('Prestatario eliminado');
+            cargarSelectPrestatarios();
+            cargarListaPrestatarios();
+        }
+
+        function eliminarPrestamista(id) {
+            const db = getDB();
+            const enUso = db.prestamos.some(p => p.prestamista_id === id);
+            if (enUso) {
+                showAlert('No se puede eliminar: este prestamista tiene préstamos registrados', 'error');
+                return;
+            }
+
+            const p = db.prestamistas.find(x => x.id === id);
+            if (!p) return;
+            if (!confirm(`¿Eliminar a "${p.nombre}"?`)) return;
+
+            db.prestamistas = db.prestamistas.filter(x => x.id !== id);
+            saveDB(db);
+            showAlert('Prestamista eliminado');
+            cargarSelectPrestamistas();
+            cargarListaPrestamistas();
+        }
+
+        function procesarPago() {
+            const db = getDB();
+            const prestamoId = parseInt(document.getElementById('pago-prestamo').value);
+            const tipo = document.getElementById('pago-tipo').value;
+            const monto = parseFloat(document.getElementById('pago-monto').value);
+            const fecha = document.getElementById('pago-fecha').value;
+
+            if (!prestamoId || !tipo || !monto || !fecha) {
+                showAlert('Completa todos los campos', 'error');
+                return;
+            }
+
+            const prestamo = db.prestamos.find(p => p.id === prestamoId);
+            if (!prestamo) return;
+
+            const config = db.config;
+            const interesAcumuladoPrevio = prestamo.interes_acumulado || 0;
+            const interesAdeudado = calcularInteresAdeudado(prestamo);
+            const diasAtraso = getDiasDeAtraso(prestamo.fecha_proximo_pago);
+            const mora = config.mora_activa === '1' ?
+                calcularMora(prestamo.capital_pendiente, parseFloat(config.mora_tasa_diaria_pct),
+                           diasAtraso, parseInt(config.mora_dias_gracia)) : 0;
+
+            // Validaciones
+            if (tipo === 'interes') {
+                if (Math.abs(monto - interesAdeudado) > 0.01) {
+                    showAlert(`El pago de interés completo debe ser Bs. ${interesAdeudado.toFixed(2)}. Si vas a pagar menos, usa "Pago Parcial de Interés"`, 'error');
+                    return;
+                }
+            } else if (tipo === 'interes-parcial') {
+                if (monto > interesAdeudado - 0.01) {
+                    showAlert(`Para pagar Bs. ${interesAdeudado.toFixed(2)} o más, usa "Solo Interés Mensual" o "Interés + Capital"`, 'error');
+                    return;
+                }
+            } else if (tipo === 'interes-capital') {
+                const totalDiponible = prestamo.capital_pendiente + interesAdeudado + mora;
+                if (monto < interesAdeudado) {
+                    showAlert(`Monto debe ser ≥ Bs. ${interesAdeudado.toFixed(2)} (interés adeudado)`, 'error');
+                    return;
+                }
+                if (monto > totalDiponible) {
+                    showAlert(`Monto no puede exceder Bs. ${totalDiponible.toFixed(2)}`, 'error');
+                    return;
+                }
+            }
+
+            // Registrar pago
+            let capitalPagado = 0;
+            let interesPagado = interesAdeudado;
+            let moraPagada = 0;
+            let nuevoInteresAcumulado = 0;
+
+            if (tipo === 'interes' || tipo === 'interes-parcial') {
+                // "interes-parcial" permite pagar menos del interés adeudado; lo no pagado se arrastra al próximo mes
+                interesPagado = monto;
+                nuevoInteresAcumulado = interesAdeudado - monto;
+            } else {
+                capitalPagado = monto - interesAdeudado;
+                if (mora > 0 && capitalPagado > mora) {
+                    moraPagada = mora;
+                    capitalPagado -= mora;
+                } else if (mora > 0) {
+                    moraPagada = capitalPagado;
+                    capitalPagado = 0;
+                }
+            }
+
+            db.pagos.push({
+                id: Date.now(),
+                prestamo_id: prestamoId,
+                monto,
+                capital_pagado: capitalPagado,
+                interes_pagado: interesPagado,
+                mora_pagada: moraPagada,
+                interes_acumulado_previo: interesAcumuladoPrevio,
+                fecha,
+                metodo: document.getElementById('pago-metodo').value,
+                notas: document.getElementById('pago-notas').value
+            });
+
+            prestamo.capital_pendiente -= capitalPagado;
+            prestamo.interes_acumulado = nuevoInteresAcumulado;
+            const siguientePago = new Date(fecha);
+            siguientePago.setMonth(siguientePago.getMonth() + 1);
+            prestamo.fecha_proximo_pago = siguientePago.toISOString().split('T')[0];
+
+            if (prestamo.capital_pendiente <= 0) {
+                prestamo.estado = 'pagado';
+                prestamo.capital_pendiente = 0;
+            }
+
+            saveDB(db);
+
+            const prestatarioDelPago = db.prestatarios.find(p => p.id === prestamo.prestatario_id);
+            guardarPago_Google(prestamoId, prestatarioDelPago ? prestatarioDelPago.nombre : 'Usuario', monto, fecha);
+
+            showAlert('✅ Pago registrado correctamente');
+
+            document.getElementById('pago-prestamo').value = '';
+            document.getElementById('pago-detalles').style.display = 'none';
+            document.getElementById('pago-tipo').value = '';
+            document.getElementById('pago-monto').value = '';
+            document.getElementById('pago-notas').value = '';
+            document.getElementById('preview-pago-parcial').style.display = 'none';
+
+            cargarHistorialPagos();
+            cargarSelectPagos();
+            actualizarDashboard();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // EDITAR / ELIMINAR PAGOS
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        let pagoEditActual = null;
+
+        function revertirPagoDePrestamo(pago, db) {
+            const prestamo = db.prestamos.find(p => p.id === pago.prestamo_id);
+            if (!prestamo) return;
+
+            prestamo.capital_pendiente += pago.capital_pagado;
+            prestamo.estado = 'activo';
+            prestamo.interes_acumulado = pago.interes_acumulado_previo || 0;
+
+            const fechaAnterior = new Date(prestamo.fecha_proximo_pago + 'T00:00:00');
+            fechaAnterior.setMonth(fechaAnterior.getMonth() - 1);
+            prestamo.fecha_proximo_pago = fechaAnterior.toISOString().split('T')[0];
+        }
+
+        function abrirEditarPago(pagoId) {
+            const db = getDB();
+            const pago = db.pagos.find(p => p.id === pagoId);
+            if (!pago) return;
+
+            const prestamo = db.prestamos.find(p => p.id === pago.prestamo_id);
+            if (!prestamo) {
+                showAlert('No se puede editar: el préstamo asociado ya no existe', 'error');
+                return;
+            }
+
+            pagoEditActual = pagoId;
+            document.getElementById('edit-pago-monto').value = pago.monto;
+            document.getElementById('edit-pago-fecha').value = pago.fecha;
+            document.getElementById('edit-pago-metodo').value = pago.metodo;
+            document.getElementById('edit-pago-notas').value = pago.notas || '';
+            document.getElementById('modal-editar-pago').classList.add('active');
+        }
+
+        function cerrarModalEditarPago() {
+            document.getElementById('modal-editar-pago').classList.remove('active');
+            pagoEditActual = null;
+        }
+
+        function guardarEdicionPago() {
+            if (!pagoEditActual) return;
+
+            const monto = parseFloat(document.getElementById('edit-pago-monto').value);
+            const fecha = document.getElementById('edit-pago-fecha').value;
+
+            if (!monto || monto <= 0) {
+                showAlert('El monto debe ser mayor a 0', 'error');
+                return;
+            }
+            if (!fecha) {
+                showAlert('Selecciona una fecha de pago', 'error');
+                return;
+            }
+
+            const db = getDB();
+            const pago = db.pagos.find(p => p.id === pagoEditActual);
+            if (!pago) return;
+
+            // Un pago original de "solo interés" (capital_pagado=0, mora_pagada=0) puede haber sido parcial
+            const esSoloInteres = pago.capital_pagado === 0 && pago.mora_pagada === 0;
+
+            // Revertir el efecto del pago original antes de recalcular
+            revertirPagoDePrestamo(pago, db);
+
+            const prestamo = db.prestamos.find(p => p.id === pago.prestamo_id);
+            const config = db.config;
+            const interesAdeudado = calcularInteresAdeudado(prestamo);
+            const diasAtraso = getDiasDeAtraso(prestamo.fecha_proximo_pago);
+            const mora = config.mora_activa === '1' ?
+                calcularMora(prestamo.capital_pendiente, parseFloat(config.mora_tasa_diaria_pct), diasAtraso, parseInt(config.mora_dias_gracia)) : 0;
+            const totalDisponible = prestamo.capital_pendiente + interesAdeudado + mora;
+
+            let capitalPagado = 0;
+            let interesPagado = interesAdeudado;
+            let moraPagada = 0;
+            let nuevoInteresAcumulado = 0;
+
+            if (esSoloInteres) {
+                if (monto > interesAdeudado + 0.01) {
+                    showAlert(`Este pago es de solo interés y no puede exceder Bs. ${interesAdeudado.toFixed(2)}`, 'error');
+                    return;
+                }
+                interesPagado = monto;
+                nuevoInteresAcumulado = interesAdeudado - monto;
+            } else {
+                if (monto < interesAdeudado - 0.01) {
+                    showAlert(`El monto debe ser al menos Bs. ${interesAdeudado.toFixed(2)} (interés adeudado)`, 'error');
+                    return;
+                }
+                if (monto > totalDisponible + 0.01) {
+                    showAlert(`El monto no puede exceder Bs. ${totalDisponible.toFixed(2)}`, 'error');
+                    return;
+                }
+
+                capitalPagado = monto - interesAdeudado;
+                if (mora > 0 && capitalPagado > mora) {
+                    moraPagada = mora;
+                    capitalPagado -= mora;
+                } else if (mora > 0) {
+                    moraPagada = capitalPagado;
+                    capitalPagado = 0;
+                }
+            }
+
+            pago.monto = monto;
+            pago.capital_pagado = capitalPagado;
+            pago.interes_pagado = interesPagado;
+            pago.mora_pagada = moraPagada;
+            pago.interes_acumulado_previo = prestamo.interes_acumulado || 0;
+            pago.fecha = fecha;
+            pago.metodo = document.getElementById('edit-pago-metodo').value;
+            pago.notas = document.getElementById('edit-pago-notas').value.trim();
+
+            prestamo.capital_pendiente -= capitalPagado;
+            prestamo.interes_acumulado = nuevoInteresAcumulado;
+            const siguientePago = new Date(fecha + 'T00:00:00');
+            siguientePago.setMonth(siguientePago.getMonth() + 1);
+            prestamo.fecha_proximo_pago = siguientePago.toISOString().split('T')[0];
+
+            if (prestamo.capital_pendiente <= 0) {
+                prestamo.estado = 'pagado';
+                prestamo.capital_pendiente = 0;
+            }
+
+            saveDB(db);
+            showAlert('✅ Pago actualizado correctamente');
+            cerrarModalEditarPago();
+
+            cargarHistorialPagos();
+            cargarSelectPagos();
+            actualizarDashboard();
+            cargarPrestamos(filtroActual);
+        }
+
+        function eliminarPago(pagoId) {
+            const db = getDB();
+            const pago = db.pagos.find(p => p.id === pagoId);
+            if (!pago) return;
+
+            if (!confirm('¿Eliminar este pago? Se revertirá el capital y la fecha de próximo pago del préstamo.')) return;
+
+            revertirPagoDePrestamo(pago, db);
+            db.pagos = db.pagos.filter(p => p.id !== pagoId);
+            saveDB(db);
+
+            showAlert('Pago eliminado');
+            cargarHistorialPagos();
+            cargarSelectPagos();
+            actualizarDashboard();
+            cargarPrestamos(filtroActual);
+        }
+
+        function cargarDetallePrestamo() {
+            const db = getDB();
+            const prestamoId = parseInt(document.getElementById('pago-prestamo').value);
+
+            document.getElementById('pago-tipo').value = '';
+            document.getElementById('pago-monto').value = '';
+            document.getElementById('preview-pago-parcial').style.display = 'none';
+
+            if (!prestamoId) {
+                document.getElementById('pago-detalles').style.display = 'none';
+                return;
+            }
+
+            const prestamo = db.prestamos.find(p => p.id === prestamoId);
+            if (!prestamo) return;
+
+            const prestatario = db.prestatarios.find(p => p.id === prestamo.prestatario_id);
+            const config = db.config;
+
+            const interesAdeudado = calcularInteresAdeudado(prestamo);
+            const diasAtraso = getDiasDeAtraso(prestamo.fecha_proximo_pago);
+            const mora = config.mora_activa === '1' ?
+                calcularMora(prestamo.capital_pendiente, parseFloat(config.mora_tasa_diaria_pct),
+                           diasAtraso, parseInt(config.mora_dias_gracia)) : 0;
+
+            const total = prestamo.capital_pendiente + interesAdeudado + mora;
+
+            document.getElementById('pago-prestatario').value = prestatario.nombre;
+            document.getElementById('pago-capital').value = `Bs. ${prestamo.capital_pendiente.toFixed(2)}`;
+            document.getElementById('pago-interes').value = `Bs. ${interesAdeudado.toFixed(2)}`;
+            document.getElementById('pago-mora').value = mora > 0 ? `Bs. ${mora.toFixed(2)}` : 'Bs. 0.00';
+            document.getElementById('pago-total').value = `Bs. ${total.toFixed(2)}`;
+            document.getElementById('pago-detalles').style.display = 'block';
+
+            const avisos = [];
+            if (diasAtraso > parseInt(config.mora_dias_gracia)) {
+                avisos.push(`⚠️ <strong>Préstamo con ${diasAtraso} días de atraso</strong> - Mora: Bs. ${mora.toFixed(2)}`);
+            }
+            if (prestamo.interes_acumulado > 0) {
+                avisos.push(`📌 El interés incluye Bs. ${prestamo.interes_acumulado.toFixed(2)} pendientes de meses anteriores`);
+            }
+
+            if (avisos.length > 0) {
+                document.getElementById('validacion-pago').style.display = 'block';
+                document.getElementById('validacion-pago').innerHTML = avisos.join('<br>');
+            } else {
+                document.getElementById('validacion-pago').style.display = 'none';
+            }
+        }
+
+        function actualizarPreviewPago() {
+            const db = getDB();
+            const prestamoId = parseInt(document.getElementById('pago-prestamo').value);
+            const tipo = document.getElementById('pago-tipo').value;
+            const monto = parseFloat(document.getElementById('pago-monto').value);
+            const preview = document.getElementById('preview-pago-parcial');
+
+            if (!prestamoId || tipo !== 'interes-parcial' || !monto || monto <= 0) {
+                preview.style.display = 'none';
+                return;
+            }
+
+            const prestamo = db.prestamos.find(p => p.id === prestamoId);
+            if (!prestamo) {
+                preview.style.display = 'none';
+                return;
+            }
+
+            const interesAdeudado = calcularInteresAdeudado(prestamo);
+            const restante = interesAdeudado - monto;
+
+            if (restante > 0.01) {
+                preview.innerHTML = `📌 Pagas Bs. ${monto.toFixed(2)} de Bs. ${interesAdeudado.toFixed(2)} de interés adeudado. <strong>Quedarán Bs. ${restante.toFixed(2)} pendientes</strong>, que se sumarán al interés del próximo mes.`;
+            } else {
+                preview.innerHTML = `✅ Este monto cubre el interés adeudado completo (Bs. ${interesAdeudado.toFixed(2)}). No quedará saldo pendiente.`;
+            }
+            preview.style.display = 'block';
+        }
+
+        function eliminarPrestamo() {
+            if (!prestamoActual) return;
+            if (!confirm('¿Estás seguro de eliminar este préstamo?')) return;
+
+            const db = getDB();
+            db.prestamos = db.prestamos.filter(p => p.id !== prestamoActual);
+            db.pagos = db.pagos.filter(pg => pg.prestamo_id !== prestamoActual);
+            saveDB(db);
+
+            showAlert('Préstamo eliminado');
+            cerrarModal();
+            cargarPrestamos(filtroActual);
+            cargarHistorialPagos();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CARGA DE DATOS
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        function actualizarDashboard() {
+            const db = getDB();
+            const config = db.config;
+
+            const prestamosActivos = db.prestamos.filter(p => p.estado === 'activo');
+            const totalPrestado = db.prestamos.reduce((s, p) => s + p.monto_original, 0);
+
+            let aACobrar = 0;
+            let moraTotalAcumulada = 0;
+            let deudoresMorosos = 0;
+
+            prestamosActivos.forEach(p => {
+                const intMensual = calcularInteresAdeudado(p);
+                aACobrar += p.capital_pendiente + intMensual;
+
+                const diasAtraso = getDiasDeAtraso(p.fecha_proximo_pago);
+                if (diasAtraso > parseInt(config.mora_dias_gracia)) {
+                    const mora = calcularMora(p.capital_pendiente, parseFloat(config.mora_tasa_diaria_pct),
+                                             diasAtraso, parseInt(config.mora_dias_gracia));
+                    moraTotalAcumulada += mora;
+                    deudoresMorosos += 1;
+                }
+            });
+
+            const totalCobrado = db.pagos.reduce((s, p) => s + p.capital_pagado, 0);
+
+            document.getElementById('metric-activos').textContent = prestamosActivos.length;
+            document.getElementById('metric-total-prestado').textContent = `Bs. ${totalPrestado.toFixed(2)}`;
+            document.getElementById('metric-a-cobrar').textContent = `Bs. ${aACobrar.toFixed(2)}`;
+            document.getElementById('metric-mora').textContent = `Bs. ${moraTotalAcumulada.toFixed(2)}`;
+            document.getElementById('metric-morosos').textContent = deudoresMorosos;
+            document.getElementById('metric-cobrado').textContent = `Bs. ${totalCobrado.toFixed(2)}`;
+
+            // Próximos vencimientos
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0); // Resetear hora a las 00:00:00
+            const en7dias = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+            const proxVenc = prestamosActivos.filter(p => {
+                const fv = new Date(p.fecha_proximo_pago + 'T00:00:00'); // Asegurar que sea a las 00:00:00
+                return fv >= hoy && fv <= en7dias;
+            }).sort((a, b) => new Date(a.fecha_proximo_pago) - new Date(b.fecha_proximo_pago));
+
+            const upcomingContainer = document.getElementById('upcoming-container');
+            if (proxVenc.length === 0) {
+                upcomingContainer.innerHTML = '<div class="empty-state"><h3>Sin vencimientos próximos</h3></div>';
+            } else {
+                let html = '<table><thead><tr><th>Prestatario</th><th>Fecha Venc.</th><th>Capital</th><th>Interés</th><th>A Cobrar</th></tr></thead><tbody>';
+                proxVenc.forEach(p => {
+                    const pre = db.prestatarios.find(pt => pt.id === p.prestatario_id);
+                    if (!pre) return;
+                    const int = calcularInteresAdeudado(p);
+                    html += `<tr><td><strong>${pre.nombre}</strong></td><td>${p.fecha_proximo_pago}</td><td>Bs. ${p.capital_pendiente.toFixed(2)}</td><td>Bs. ${int.toFixed(2)}</td><td style="color: #fcd34d;"><strong>Bs. ${(p.capital_pendiente + int).toFixed(2)}</strong></td></tr>`;
+                });
+                html += '</tbody></table>';
+                upcomingContainer.innerHTML = html;
+            }
+
+            // Morosos
+            const morosos = prestamosActivos.filter(p => getDiasDeAtraso(p.fecha_proximo_pago) > parseInt(config.mora_dias_gracia));
+            const morosusContainer = document.getElementById('morosos-container');
+            if (morosos.length === 0) {
+                morosusContainer.innerHTML = '<div class="empty-state"><h3>¡Sin deudores morosos!</h3><p>Excelente 🎉</p></div>';
+            } else {
+                let html = '<table><thead><tr><th>Prestatario</th><th>Días Atraso</th><th>Capital</th><th>Mora</th><th>Teléfono</th></tr></thead><tbody>';
+                morosos.forEach(p => {
+                    const pre = db.prestatarios.find(pt => pt.id === p.prestatario_id);
+                    if (!pre) return;
+                    const dias = getDiasDeAtraso(p.fecha_proximo_pago);
+                    const mora = calcularMora(p.capital_pendiente, parseFloat(config.mora_tasa_diaria_pct), dias, parseInt(config.mora_dias_gracia));
+                    html += `<tr><td><strong>${pre.nombre}</strong></td><td style="color: #ef4444;"><strong>${dias} días</strong></td><td>Bs. ${p.capital_pendiente.toFixed(2)}</td><td style="color: #ef4444;">Bs. ${mora.toFixed(2)}</td><td>${pre.telefono}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                morosusContainer.innerHTML = html;
+            }
+        }
+
+        function cargarPrestamos(filtro = 'todos') {
+            const db = getDB();
+            filtroActual = filtro;
+
+            let prestamos = db.prestamos;
+            if (filtro === 'activos') prestamos = prestamos.filter(p => p.estado === 'activo');
+            if (filtro === 'pagados') prestamos = prestamos.filter(p => p.estado === 'pagado');
+
+            const container = document.getElementById('prestamos-container');
+
+            if (prestamos.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>Sin préstamos</h3></div>';
+                return;
+            }
+
+            let html = '';
+            prestamos.forEach(p => {
+                const pre = db.prestatarios.find(pt => pt.id === p.prestatario_id);
+                const prest = db.prestamistas.find(ps => ps.id === p.prestamista_id);
+                if (!pre || !prest) return;
+                const config = db.config;
+                
+                const intMensual = calcularInteresAdeudado(p);
+                const diasAtraso = getDiasDeAtraso(p.fecha_proximo_pago);
+                const mora = config.mora_activa === '1' ?
+                    calcularMora(p.capital_pendiente, parseFloat(config.mora_tasa_diaria_pct), diasAtraso, parseInt(config.mora_dias_gracia)) : 0;
+
+                const esMoroso = diasAtraso > parseInt(config.mora_dias_gracia);
+                const badge = p.estado === 'activo' ? 
+                    (esMoroso ? '<span class="badge badge-moroso">⚠️ Moroso</span>' : '<span class="badge badge-activo">✓ Activo</span>') :
+                    '<span class="badge badge-pagado">✔ Pagado</span>';
+
+                html += `
+                    <div class="expander">
+                        <div class="expander-header" onclick="toggleExpander(this)">
+                            <div>
+                                <h4 style="margin: 0; color: var(--heading);">${pre.nombre}</h4>
+                                <p style="color: var(--gray); margin: 5px 0; font-size: 0.9em;">De: ${prest.nombre}</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                ${badge}
+                                <span class="expander-toggle">▼</span>
+                            </div>
+                        </div>
+                        <div class="expander-content">
+                            <div class="form-row" style="margin-bottom: 15px;">
+                                <div>
+                                    <div style="color: var(--gray); font-size: 0.85em; text-transform: uppercase;">Capital Pendiente</div>
+                                    <div style="color: #22c55e; font-size: 1.2em; font-weight: 600;">Bs. ${p.capital_pendiente.toFixed(2)}</div>
+                                </div>
+                                <div>
+                                    <div style="color: var(--gray); font-size: 0.85em; text-transform: uppercase;">Interés Adeudado</div>
+                                    <div style="color: #8b5cf6; font-size: 1.2em; font-weight: 600;">Bs. ${intMensual.toFixed(2)}</div>
+                                </div>
+                                <div>
+                                    <div style="color: var(--gray); font-size: 0.85em; text-transform: uppercase;">Próx. Pago</div>
+                                    <div style="color: var(--heading); font-size: 1.1em; font-weight: 600;">${p.fecha_proximo_pago}</div>
+                                </div>
+                                ${mora > 0 ? `
+                                    <div>
+                                        <div style="color: var(--gray); font-size: 0.85em; text-transform: uppercase;">Mora Acumulada</div>
+                                        <div style="color: #ef4444; font-size: 1.2em; font-weight: 600;">Bs. ${mora.toFixed(2)}</div>
+                                    </div>
+                                ` : ''}
+                                ${p.interes_acumulado > 0 ? `
+                                    <div>
+                                        <div style="color: var(--gray); font-size: 0.85em; text-transform: uppercase;">Interés Pendiente (mes anterior)</div>
+                                        <div style="color: #fcd34d; font-size: 1.2em; font-weight: 600;">Bs. ${p.interes_acumulado.toFixed(2)}</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.9em;">
+                                    <div><span style="color: var(--gray);">Teléfono:</span> <strong style="color: var(--heading);">${pre.telefono || '—'}</strong></div>
+                                    <div><span style="color: var(--gray);">Dirección:</span> <strong style="color: var(--heading);">${pre.direccion || '—'}</strong></div>
+                                    <div><span style="color: var(--gray);">CI:</span> <strong style="color: var(--heading);">${pre.ci || '—'}</strong></div>
+                                    <div><span style="color: var(--gray);">Ubicación:</span> <strong style="color: var(--heading);">${pre.ubicacion || '—'}</strong></div>
+                                </div>
+                            </div>
+
+                            ${p.garantia_nombre ? `
+                                <div style="background: rgba(139, 92, 246, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #8b5cf6;">
+                                    <h5 style="color: var(--heading2); margin-bottom: 8px;">🛡️ Garante</h5>
+                                    <div style="font-size: 0.9em;">
+                                        <div><span style="color: var(--gray);">Nombre:</span> <strong style="color: var(--heading);">${p.garantia_nombre}</strong></div>
+                                        <div><span style="color: var(--gray);">Teléfono:</span> <strong style="color: var(--heading);">${p.garantia_telefono || '—'}</strong></div>
+                                        <div><span style="color: var(--gray);">Dirección:</span> <strong style="color: var(--heading);">${p.garantia_direccion || '—'}</strong></div>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            <div class="btn-group">
+                                <button class="btn btn-success btn-sm" onclick="abrirDetalleModal(${p.id})">👁️ Ver Detalles</button>
+                                <button class="btn btn-primary btn-sm" onclick="abrirTabaPago(${p.id})">💵 Pagar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function cargarSelectPrestatarios() {
+            const db = getDB();
+            const select = document.getElementById('select-prestatario-existente');
+
+            let options = '<option value="">-- Seleccionar --</option>';
+            db.prestatarios.forEach(p => {
+                options += `<option value="${p.id}">${p.nombre} (${p.telefono || 'Sin tel'})</option>`;
+            });
+
+            select.innerHTML = options;
+
+            // Mostrar mensaje si no hay prestatarios
+            const msg = document.getElementById('mensaje-no-prestatarios');
+            if (db.prestatarios.length === 0) {
+                msg.style.display = 'block';
+            } else {
+                msg.style.display = 'none';
+            }
+        }
+
+        function cargarSelectPrestamistas() {
+            const db = getDB();
+            const select = document.getElementById('select-prestamista-existente');
+
+            let options = '<option value="">-- Seleccionar --</option>';
+            db.prestamistas.forEach(p => {
+                options += `<option value="${p.id}">${p.nombre}</option>`;
+            });
+
+            select.innerHTML = options;
+
+            // Mostrar mensaje si no hay prestamistas
+            const msg = document.getElementById('mensaje-no-prestamistas');
+            if (db.prestamistas.length === 0) {
+                msg.style.display = 'block';
+            } else {
+                msg.style.display = 'none';
+            }
+        }
+
+        function togglePrestatarioOption() {
+            const tipo = document.querySelector('input[name="tipo-prestatario"]:checked').value;
+            const selectorExistente = document.getElementById('selector-prestatario-existente');
+            const formularioNuevo = document.getElementById('formulario-prestatario-nuevo');
+
+            if (tipo === 'existente') {
+                selectorExistente.style.display = 'block';
+                formularioNuevo.style.display = 'none';
+                // Hacer campos no requeridos cuando usas existente
+                document.getElementById('prest-nombre').required = false;
+                document.getElementById('select-prestatario-existente').required = true;
+            } else {
+                selectorExistente.style.display = 'none';
+                formularioNuevo.style.display = 'block';
+                // Hacer campo requerido cuando creas uno nuevo
+                document.getElementById('prest-nombre').required = true;
+                document.getElementById('select-prestatario-existente').required = false;
+                // Limpiar selector
+                document.getElementById('select-prestatario-existente').value = '';
+            }
+        }
+
+        function toggleGaranteOption() {
+            const tipo = document.querySelector('input[name="tipo-garante"]:checked').value;
+            const formularioGarante = document.getElementById('formulario-garante');
+
+            if (tipo === 'con-garante') {
+                formularioGarante.style.display = 'block';
+            } else {
+                formularioGarante.style.display = 'none';
+                // Limpiar campos de garante
+                document.getElementById('gar-nombre').value = '';
+                document.getElementById('gar-telefono').value = '';
+                document.getElementById('gar-direccion').value = '';
+            }
+        }
+
+        function togglePrestamisustaOption() {
+            const tipo = document.querySelector('input[name="tipo-prestamista"]:checked').value;
+            const selectorExistente = document.getElementById('selector-prestamista-existente');
+            const formularioNuevo = document.getElementById('formulario-prestamista-nuevo');
+
+            if (tipo === 'existente') {
+                selectorExistente.style.display = 'block';
+                formularioNuevo.style.display = 'none';
+                // Hacer campos no requeridos cuando usas existente
+                document.getElementById('prest-prestamista-nombre').required = false;
+                document.getElementById('select-prestamista-existente').required = true;
+            } else {
+                selectorExistente.style.display = 'none';
+                formularioNuevo.style.display = 'block';
+                // Hacer campo requerido cuando creas uno nuevo
+                document.getElementById('prest-prestamista-nombre').required = true;
+                document.getElementById('select-prestamista-existente').required = false;
+                // Limpiar selector
+                document.getElementById('select-prestamista-existente').value = '';
+            }
+        }
+
+        function cargarSelectPagos() {
+            const db = getDB();
+            const prestamosActivos = db.prestamos.filter(p => p.estado === 'activo');
+            const selectPago = document.getElementById('pago-prestamo');
+
+            let options = '<option value="">-- Seleccionar --</option>';
+            prestamosActivos.forEach(p => {
+                const pre = db.prestatarios.find(pt => pt.id === p.prestatario_id);
+                options += `<option value="${p.id}">${pre.nombre} (Bs. ${p.capital_pendiente.toFixed(2)})</option>`;
+            });
+
+            selectPago.innerHTML = options;
+        }
+
+        function cargarHistorialPagos() {
+            const db = getDB();
+            const container = document.getElementById('historial-pagos');
+
+            if (db.pagos.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>Sin pagos registrados</h3></div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Prestatario</th><th>Fecha</th><th>Capital</th><th>Interés</th><th>Mora</th><th>Total</th><th>Método</th><th>Acciones</th></tr></thead><tbody>';
+            db.pagos.slice().reverse().forEach(pag => {
+                const prest = db.prestamos.find(p => p.id === pag.prestamo_id);
+                const pre = prest ? db.prestatarios.find(p => p.id === prest.prestatario_id) : null;
+                const nombrePrestatario = pre ? pre.nombre : '(préstamo eliminado)';
+                html += `<tr><td>${nombrePrestatario}</td><td>${pag.fecha}</td><td>Bs. ${pag.capital_pagado.toFixed(2)}</td><td>Bs. ${pag.interes_pagado.toFixed(2)}</td><td>Bs. ${pag.mora_pagada.toFixed(2)}</td><td style="color: #fcd34d;"><strong>Bs. ${pag.monto.toFixed(2)}</strong></td><td>${pag.metodo}</td><td>
+                    <div class="btn-group" style="margin-top: 0;">
+                        <button class="btn btn-success btn-sm" onclick="abrirEditarPago(${pag.id})">✏️ Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarPago(${pag.id})">🗑️ Eliminar</button>
+                    </div>
+                </td></tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // HISTORIAL DE PAGOS POR CLIENTE Y EXPORTACIÓN A PDF
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        let clienteHistorialActual = null;
+
+        function obtenerDatosHistorialCliente(prestatarioId) {
+            const db = getDB();
+            const prestatario = db.prestatarios.find(p => p.id === prestatarioId);
+            if (!prestatario) return null;
+
+            const prestamosCliente = db.prestamos.filter(p => p.prestatario_id === prestatarioId);
+            const prestamoIds = new Set(prestamosCliente.map(p => p.id));
+            const pagosCliente = db.pagos
+                .filter(pg => prestamoIds.has(pg.prestamo_id))
+                .slice()
+                .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+            return {
+                prestatario,
+                prestamosCliente,
+                pagosCliente,
+                totalPrestado: prestamosCliente.reduce((s, p) => s + p.monto_original, 0),
+                totalPagado: pagosCliente.reduce((s, p) => s + p.monto, 0),
+                totalCapitalPagado: pagosCliente.reduce((s, p) => s + p.capital_pagado, 0),
+                totalInteresPagado: pagosCliente.reduce((s, p) => s + p.interes_pagado, 0),
+                totalMoraPagada: pagosCliente.reduce((s, p) => s + p.mora_pagada, 0),
+                saldoPendiente: prestamosCliente.filter(p => p.estado === 'activo').reduce((s, p) => s + p.capital_pendiente, 0)
+            };
+        }
+
+        function abrirHistorialCliente(prestatarioId) {
+            const datos = obtenerDatosHistorialCliente(prestatarioId);
+            if (!datos) return;
+
+            clienteHistorialActual = prestatarioId;
+
+            let html = `
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                    <div><span style="color: var(--gray); font-size: 0.85em;">Cliente</span><div style="color: #22c55e; font-size: 1.2em; font-weight: 600;">${datos.prestatario.nombre}</div></div>
+                    <div><span style="color: var(--gray); font-size: 0.85em;">Teléfono</span><div style="font-size: 1.1em; font-weight: 600;">${datos.prestatario.telefono || '—'}</div></div>
+                    <div><span style="color: var(--gray); font-size: 0.85em;">Total Prestado (histórico)</span><div style="color: #8b5cf6; font-size: 1.1em; font-weight: 600;">Bs. ${datos.totalPrestado.toFixed(2)}</div></div>
+                    <div><span style="color: var(--gray); font-size: 0.85em;">Saldo Pendiente Actual</span><div style="color: #ef4444; font-size: 1.1em; font-weight: 600;">Bs. ${datos.saldoPendiente.toFixed(2)}</div></div>
+                </div>
+            `;
+
+            if (datos.pagosCliente.length === 0) {
+                html += '<div class="empty-state"><h3>Sin pagos registrados para este cliente</h3></div>';
+            } else {
+                html += '<div class="table-responsive"><table><thead><tr><th>Fecha</th><th>Capital</th><th>Interés</th><th>Mora</th><th>Total Pagado</th><th>Método</th><th>Notas</th></tr></thead><tbody>';
+                datos.pagosCliente.forEach(pg => {
+                    html += `<tr>
+                        <td>${pg.fecha}</td>
+                        <td>Bs. ${pg.capital_pagado.toFixed(2)}</td>
+                        <td>Bs. ${pg.interes_pagado.toFixed(2)}</td>
+                        <td>Bs. ${pg.mora_pagada.toFixed(2)}</td>
+                        <td style="color: #fcd34d;"><strong>Bs. ${pg.monto.toFixed(2)}</strong></td>
+                        <td>${pg.metodo}</td>
+                        <td>${pg.notas || '—'}</td>
+                    </tr>`;
+                });
+                html += `<tr style="font-weight: 700; background: rgba(255,255,255,0.05);">
+                    <td>TOTAL</td>
+                    <td>Bs. ${datos.totalCapitalPagado.toFixed(2)}</td>
+                    <td>Bs. ${datos.totalInteresPagado.toFixed(2)}</td>
+                    <td>Bs. ${datos.totalMoraPagada.toFixed(2)}</td>
+                    <td style="color: #fcd34d;">Bs. ${datos.totalPagado.toFixed(2)}</td>
+                    <td></td><td></td>
+                </tr>`;
+                html += '</tbody></table></div>';
+            }
+
+            document.getElementById('modal-historial-cliente-titulo').textContent = `📜 Historial de Pagos - ${datos.prestatario.nombre}`;
+            document.getElementById('modal-historial-cliente-body').innerHTML = html;
+            document.getElementById('modal-historial-cliente').classList.add('active');
+        }
+
+        function cerrarModalHistorialCliente() {
+            document.getElementById('modal-historial-cliente').classList.remove('active');
+            clienteHistorialActual = null;
+        }
+
+        function exportarHistorialClientePDF() {
+            if (!clienteHistorialActual) return;
+
+            const datos = obtenerDatosHistorialCliente(clienteHistorialActual);
+            if (!datos) return;
+
+            if (!window.jspdf) {
+                showAlert('No se pudo cargar el generador de PDF. Verifica tu conexión a internet e intenta de nuevo.', 'error');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(18);
+            doc.setTextColor(67, 56, 202);
+            doc.text('Historial de Pagos', 14, 20);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text('GestorPrest - Sistema de Gestión de Préstamos', 14, 27);
+
+            doc.setFontSize(11);
+            doc.setTextColor(20);
+            const infoLines = [
+                `Cliente: ${datos.prestatario.nombre}`,
+                `Teléfono: ${datos.prestatario.telefono || '—'}    CI: ${datos.prestatario.ci || '—'}`,
+                `Dirección: ${datos.prestatario.direccion || '—'}`,
+                `Total Prestado (histórico): Bs. ${datos.totalPrestado.toFixed(2)}    Saldo Pendiente Actual: Bs. ${datos.saldoPendiente.toFixed(2)}`
+            ];
+            let y = 38;
+            infoLines.forEach(line => {
+                doc.text(line, 14, y);
+                y += 6;
+            });
+
+            const filas = datos.pagosCliente.length === 0
+                ? [['—', '—', '—', '—', '—', '—', 'Sin pagos registrados']]
+                : datos.pagosCliente.map(pg => [
+                    pg.fecha,
+                    `Bs. ${pg.capital_pagado.toFixed(2)}`,
+                    `Bs. ${pg.interes_pagado.toFixed(2)}`,
+                    `Bs. ${pg.mora_pagada.toFixed(2)}`,
+                    `Bs. ${pg.monto.toFixed(2)}`,
+                    pg.metodo,
+                    pg.notas || '—'
+                ]);
+
+            doc.autoTable({
+                startY: y + 4,
+                head: [['Fecha', 'Capital', 'Interés', 'Mora', 'Total Pagado', 'Método', 'Notas']],
+                body: filas,
+                foot: [[
+                    'TOTAL',
+                    `Bs. ${datos.totalCapitalPagado.toFixed(2)}`,
+                    `Bs. ${datos.totalInteresPagado.toFixed(2)}`,
+                    `Bs. ${datos.totalMoraPagada.toFixed(2)}`,
+                    `Bs. ${datos.totalPagado.toFixed(2)}`,
+                    '', ''
+                ]],
+                headStyles: { fillColor: [67, 56, 202] },
+                footStyles: { fillColor: [243, 244, 246], textColor: [20, 20, 20], fontStyle: 'bold' },
+                styles: { fontSize: 9 }
+            });
+
+            const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 20;
+            const fechaGeneracion = new Date().toLocaleString('es-BO');
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text(`Generado el ${fechaGeneracion}`, 14, finalY + 10);
+
+            const nombreArchivo = `Historial_${datos.prestatario.nombre.replace(/\s+/g, '_')}.pdf`;
+            doc.save(nombreArchivo);
+        }
+
+        function cargarPersonas() {
+            const db = getDB();
+
+            // Prestatarios
+            let htmlPre = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">';
+            db.prestatarios.forEach(p => {
+                const prestamos = db.prestamos.filter(pr => pr.prestatario_id === p.id);
+                htmlPre += `
+                    <div class="expander">
+                        <div class="expander-header" onclick="toggleExpander(this)">
+                            <div>
+                                <h4 style="margin: 0; color: #22c55e;">${p.nombre}</h4>
+                                <p style="color: var(--gray); margin: 5px 0; font-size: 0.9em;">${prestamos.length} préstamo(s)</p>
+                            </div>
+                            <span class="expander-toggle">▼</span>
+                        </div>
+                        <div class="expander-content">
+                            <div style="font-size: 0.9em;">
+                                <div style="margin-bottom: 8px;"><span style="color: var(--gray);">📱 Teléfono:</span> <strong>${p.telefono || '—'}</strong></div>
+                                <div style="margin-bottom: 8px;"><span style="color: var(--gray);">🆔 CI:</span> <strong>${p.ci || '—'}</strong></div>
+                                <div style="margin-bottom: 8px;"><span style="color: var(--gray);">📍 Dirección:</span> <strong>${p.direccion || '—'}</strong></div>
+                                <div style="margin-bottom: 8px;"><span style="color: var(--gray);">🏘️ Ubicación:</span> <strong>${p.ubicacion || '—'}</strong></div>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-success btn-sm" onclick="abrirHistorialCliente(${p.id})">📜 Ver Historial de Pagos</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            htmlPre += '</div>';
+            document.getElementById('prestatarios-container').innerHTML = htmlPre;
+
+            // Prestamistas
+            let htmlPrest = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">';
+            db.prestamistas.forEach(p => {
+                const prestamos = db.prestamos.filter(pr => pr.prestamista_id === p.id);
+                const totalPrestado = prestamos.reduce((s, pr) => s + pr.monto_original, 0);
+                htmlPrest += `
+                    <div class="expander">
+                        <div class="expander-header" onclick="toggleExpander(this)">
+                            <div>
+                                <h4 style="margin: 0; color: #8b5cf6;">${p.nombre}</h4>
+                                <p style="color: var(--gray); margin: 5px 0; font-size: 0.9em;">Bs. ${totalPrestado.toFixed(2)} prestado</p>
+                            </div>
+                            <span class="expander-toggle">▼</span>
+                        </div>
+                        <div class="expander-content">
+                            <div style="font-size: 0.9em;">
+                                <div style="margin-bottom: 8px;"><span style="color: var(--gray);">📱 Teléfono:</span> <strong>${p.telefono || '—'}</strong></div>
+                                <div style="margin-bottom: 8px;"><span style="color: var(--gray);">📊 Préstamos:</span> <strong>${prestamos.length}</strong></div>
+                                <div style="margin-bottom: 8px;"><span style="color: var(--gray);">💰 Total:</span> <strong style="color: #fcd34d;">Bs. ${totalPrestado.toFixed(2)}</strong></div>
+                                ${p.notas ? `<div style="margin-bottom: 8px;"><span style="color: var(--gray);">📝 Notas:</span> <strong>${p.notas}</strong></div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            htmlPrest += '</div>';
+            document.getElementById('prestamistas-container').innerHTML = htmlPrest;
+        }
+
+        function cargarReportes() {
+            const db = getDB();
+
+            const completados = db.prestamos.filter(p => p.estado === 'pagado').length;
+            const totalCobrado = db.prestamos.filter(p => p.estado === 'pagado').reduce((s, p) => s + p.monto_original, 0);
+            const interesCobrado = db.pagos.reduce((s, p) => s + p.interes_pagado, 0);
+            const moraCobrada = db.pagos.reduce((s, p) => s + p.mora_pagada, 0);
+
+            document.getElementById('report-completados').textContent = completados;
+            document.getElementById('report-cobrado').textContent = `Bs. ${totalCobrado.toFixed(2)}`;
+            document.getElementById('report-interes').textContent = `Bs. ${interesCobrado.toFixed(2)}`;
+            document.getElementById('report-mora').textContent = `Bs. ${moraCobrada.toFixed(2)}`;
+
+            // Por prestamista
+            let htmlPrest = '<table><thead><tr><th>Prestamista</th><th>Activos</th><th>Pagados</th><th>Total Prestado</th></tr></thead><tbody>';
+            db.prestamistas.forEach(p => {
+                const prest = db.prestamos.filter(pr => pr.prestamista_id === p.id);
+                const activos = prest.filter(pr => pr.estado === 'activo').length;
+                const pagados = prest.filter(pr => pr.estado === 'pagado').length;
+                const total = prest.reduce((s, pr) => s + pr.monto_original, 0);
+                htmlPrest += `<tr><td><strong>${p.nombre}</strong></td><td>${activos}</td><td>${pagados}</td><td>Bs. ${total.toFixed(2)}</td></tr>`;
+            });
+            htmlPrest += '</tbody></table>';
+            document.getElementById('report-prestamistas').innerHTML = htmlPrest || '<div class="empty-state"><h3>Sin prestamistas</h3></div>';
+
+            // Top 10 deudores
+            const deudores = db.prestamos.filter(p => p.estado === 'activo').map(p => ({
+                ...p,
+                prestatario: db.prestatarios.find(pt => pt.id === p.prestatario_id),
+                deuda: p.capital_pendiente + calcularInteresAdeudado(p)
+            })).filter(d => d.prestatario).sort((a, b) => b.deuda - a.deuda).slice(0, 10);
+
+            let htmlDeudores = '<table><thead><tr><th>Prestatario</th><th>Capital</th><th>Interés</th><th>Total Deuda</th><th>Tel</th></tr></thead><tbody>';
+            deudores.forEach(d => {
+                const int = calcularInteresAdeudado(d);
+                htmlDeudores += `<tr><td><strong>${d.prestatario.nombre}</strong></td><td>Bs. ${d.capital_pendiente.toFixed(2)}</td><td>Bs. ${int.toFixed(2)}</td><td style="color: #ef4444;"><strong>Bs. ${d.deuda.toFixed(2)}</strong></td><td>${d.prestatario.telefono}</td></tr>`;
+            });
+            htmlDeudores += '</tbody></table>';
+            document.getElementById('report-top-deudores').innerHTML = deudores.length > 0 ? htmlDeudores : '<div class="empty-state"><h3>Sin deudores</h3></div>';
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CALENDARIO
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        function renderizarCalendario() {
+            const db = getDB();
+            const config = db.config;
+            const ano = mesActualMostrado.getFullYear();
+            const mes = mesActualMostrado.getMonth();
+
+            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            document.getElementById('calendario-titulo').textContent = `${meses[mes]} ${ano}`;
+
+            const primerDia = new Date(ano, mes, 1);
+            const ultimoDia = new Date(ano, mes + 1, 0);
+            const diasMes = ultimoDia.getDate();
+            let startingDayOfWeek = primerDia.getDay() - 1;
+            if (startingDayOfWeek < 0) startingDayOfWeek = 6;
+
+            const grid = document.getElementById('calendario-grid');
+            grid.innerHTML = '';
+
+            const hoy = new Date();
+            const esMesFuturo = ano > hoy.getFullYear() || (ano === hoy.getFullYear() && mes > hoy.getMonth());
+
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day';
+                emptyDay.style.opacity = '0.3';
+                grid.appendChild(emptyDay);
+            }
+
+            for (let dia = 1; dia <= diasMes; dia++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day';
+
+                const fechaStr = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'calendar-day-number';
+                dayNumber.textContent = dia;
+                dayCell.appendChild(dayNumber);
+
+                // Pagos programados exactamente para este día
+                const pagosDelDia = db.prestamos.filter(p => p.estado === 'activo' && p.fecha_proximo_pago === fechaStr);
+
+                // Deudas en mora de meses anteriores: se arrastran mes a mes (mismo día) para que no se olviden
+                const pagosArrastrados = esMesFuturo ? [] : db.prestamos.filter(p => {
+                    if (p.estado !== 'activo') return false;
+                    if (p.fecha_proximo_pago === fechaStr) return false;
+
+                    const fechaVenc = new Date(p.fecha_proximo_pago + 'T00:00:00');
+                    if (fechaVenc.getDate() !== dia) return false;
+
+                    const esMesAnterior = fechaVenc.getFullYear() < ano || (fechaVenc.getFullYear() === ano && fechaVenc.getMonth() < mes);
+                    if (!esMesAnterior) return false;
+
+                    return getDiasDeAtraso(p.fecha_proximo_pago) > parseInt(config.mora_dias_gracia);
+                });
+
+                [...pagosDelDia, ...pagosArrastrados].forEach(p => {
+                    const pre = db.prestatarios.find(pt => pt.id === p.prestatario_id);
+                    if (!pre) return;
+
+                    const int = calcularInteresAdeudado(p);
+                    const diasAtraso = getDiasDeAtraso(p.fecha_proximo_pago);
+                    const esMoroso = diasAtraso > parseInt(config.mora_dias_gracia);
+
+                    const event = document.createElement('div');
+                    event.className = esMoroso ? 'calendar-event calendar-event-moroso' : 'calendar-event';
+                    event.textContent = esMoroso ? `⚠️ ${pre.nombre.split(' ')[0]}` : pre.nombre.split(' ')[0];
+                    event.title = esMoroso ? `Bs. ${int.toFixed(2)} - En mora (${diasAtraso} días)` : `Bs. ${int.toFixed(2)}`;
+                    dayCell.appendChild(event);
+                });
+
+                grid.appendChild(dayCell);
+            }
+        }
+
+        function mesAnterior() {
+            mesActualMostrado.setMonth(mesActualMostrado.getMonth() - 1);
+            renderizarCalendario();
+        }
+
+        function mesSiguiente() {
+            mesActualMostrado.setMonth(mesActualMostrado.getMonth() + 1);
+            renderizarCalendario();
+        }
+
+        function mesActual() {
+            mesActualMostrado = new Date();
+            renderizarCalendario();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // MODALES Y UTILIDADES
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        function abrirDetalleModal(prestamoId) {
+            const db = getDB();
+            const prest = db.prestamos.find(p => p.id === prestamoId);
+            prestamoActual = prestamoId;
+
+            const pre = db.prestatarios.find(p => p.id === prest.prestatario_id);
+            const prestamista = db.prestamistas.find(p => p.id === prest.prestamista_id);
+            const config = db.config;
+
+            const intMensual = calcularInteresAdeudado(prest);
+            const diasAtraso = getDiasDeAtraso(prest.fecha_proximo_pago);
+            const mora = config.mora_activa === '1' ?
+                calcularMora(prest.capital_pendiente, parseFloat(config.mora_tasa_diaria_pct), diasAtraso, parseInt(config.mora_dias_gracia)) : 0;
+
+            let html = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div><span style="color: var(--gray); font-size: 0.85em;">Prestatario</span><div style="color: #22c55e; font-size: 1.2em; font-weight: 600;">${pre.nombre}</div></div>
+                    <div><span style="color: var(--gray); font-size: 0.85em;">Prestamista</span><div style="color: #8b5cf6; font-size: 1.2em; font-weight: 600;">${prestamista.nombre}</div></div>
+                    <div><span style="color: var(--gray); font-size: 0.85em;">Capital Pendiente</span><div style="color: #22c55e; font-size: 1.2em; font-weight: 600;">Bs. ${prest.capital_pendiente.toFixed(2)}</div></div>
+                    <div><span style="color: var(--gray); font-size: 0.85em;">Interés Adeudado</span><div style="color: #8b5cf6; font-size: 1.2em; font-weight: 600;">Bs. ${intMensual.toFixed(2)}</div></div>
+                </div>
+
+                ${prest.interes_acumulado > 0 ? `
+                    <div style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 8px; padding: 12px; color: #fcd34d; margin-bottom: 15px;">
+                        📌 Incluye Bs. ${prest.interes_acumulado.toFixed(2)} de interés pendiente de meses anteriores (pago parcial / a cuenta)
+                    </div>
+                ` : ''}
+
+                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h4 style="color: var(--heading); margin-bottom: 10px;">Información de Contacto</h4>
+                    <p><span style="color: var(--gray);">📱 Teléfono:</span> <strong>${pre.telefono}</strong></p>
+                    <p><span style="color: var(--gray);">🏠 Dirección:</span> <strong>${pre.direccion}</strong></p>
+                    <p><span style="color: var(--gray);">📍 Ubicación:</span> <strong>${pre.ubicacion}</strong></p>
+                    <p><span style="color: var(--gray);">🆔 CI:</span> <strong>${pre.ci}</strong></p>
+                </div>
+
+                ${prest.garantia_nombre ? `
+                    <div style="background: rgba(139, 92, 246, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #8b5cf6;">
+                        <h4 style="color: var(--heading2); margin-bottom: 10px;">🛡️ Garante</h4>
+                        <p><span style="color: var(--gray);">Nombre:</span> <strong>${prest.garantia_nombre}</strong></p>
+                        <p><span style="color: var(--gray);">📱 Teléfono:</span> <strong>${prest.garantia_telefono}</strong></p>
+                        <p><span style="color: var(--gray);">📍 Dirección:</span> <strong>${prest.garantia_direccion}</strong></p>
+                    </div>
+                ` : ''}
+
+                ${mora > 0 ? `
+                    <div class="card-rojo">
+                        ⚠️ <strong>Mora acumulada: Bs. ${mora.toFixed(2)}</strong><br>
+                        Días de atraso: ${diasAtraso}
+                    </div>
+                ` : ''}
+            `;
+
+            document.getElementById('modal-body').innerHTML = html;
+            document.getElementById('modal-detalle').classList.add('active');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-detalle').classList.remove('active');
+            prestamoActual = null;
+        }
+
+        function abrirTabaPago(prestamoId) {
+            document.getElementById('pago-prestamo').value = prestamoId;
+            cargarDetallePrestamo();
+            switchTab('pagos');
+        }
+
+        function abrirPago() {
+            cerrarModal();
+            switchTab('pagos');
+            setTimeout(() => {
+                document.getElementById('pago-prestamo').value = prestamoActual;
+                cargarDetallePrestamo();
+            }, 100);
+        }
+
+        function toggleExpander(header) {
+            const expander = header.closest('.expander');
+            expander.classList.toggle('open');
+        }
+
+        function filtrarPrestamos(filtro) {
+            cargarPrestamos(filtro);
+        }
+
+        function guardarConfig() {
+            const db = getDB();
+            db.config.mora_activa = document.getElementById('config-mora-activa').value;
+            db.config.mora_tasa_diaria_pct = document.getElementById('config-mora-tasa').value;
+            db.config.mora_dias_gracia = document.getElementById('config-mora-dias').value;
+            saveDB(db);
+            showAlert('✅ Configuración guardada');
+        }
+
+        function exportarDatos() {
+            const db = getDB();
+            const json = JSON.stringify(db, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gestorprest_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        function limpiarDatos() {
+            if (!confirm('⚠️ ¿Eliminar TODOS los datos? Esta acción no se puede deshacer')) return;
+            localStorage.removeItem(DB_KEY);
+            location.reload();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // INICIALIZACIÓN
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        function inicializar() {
+            const db = getDB();
+
+            verificarConexionGoogleSheets();
+
+            // Cargar selectores
+            cargarSelectPrestamistas();
+            cargarSelectPagos();
+            cargarHistorialPagos();
+
+            // Iniciar dashboard
+            actualizarDashboard();
+
+            // Establecer fechas por defecto
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('prest-fecha-inicio').value = hoy;
+            
+            const proximoMes = new Date();
+            proximoMes.setMonth(proximoMes.getMonth() + 1);
+            document.getElementById('prest-fecha').value = proximoMes.toISOString().split('T')[0];
+            
+            document.getElementById('pago-fecha').value = hoy;
+
+            // Cargar configuración
+            document.getElementById('config-mora-activa').value = db.config.mora_activa || '1';
+            document.getElementById('config-mora-tasa').value = db.config.mora_tasa_diaria_pct || '0.1';
+            document.getElementById('config-mora-dias').value = db.config.mora_dias_gracia || '3';
+
+            // Cargar selectores
+            cargarSelectPrestatarios();
+            cargarSelectPrestamistas();
+            cargarListaPrestatarios();
+            cargarListaPrestamistas();
+
+            // Cargar formulario de nuevo préstamo
+            document.getElementById('form-prestamo').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                let prestamoId = null;
+                let prestamisustaId = null;
+
+                // Manejar Prestatario
+                const tipoPrestatario = document.querySelector('input[name="tipo-prestatario"]:checked').value;
+                if (tipoPrestatario === 'existente') {
+                    prestamoId = parseInt(document.getElementById('select-prestatario-existente').value);
+                    if (!prestamoId) {
+                        showAlert('Selecciona un prestatario existente', 'error');
+                        return;
+                    }
+                } else {
+                    const nombrePrest = document.getElementById('prest-nombre').value.trim();
+                    if (!nombrePrest) {
+                        showAlert('El nombre del prestatario es obligatorio', 'error');
+                        return;
+                    }
+
+                    const prestatario = {
+                        nombre: nombrePrest,
+                        telefono: document.getElementById('prest-telefono').value.trim(),
+                        ci: document.getElementById('prest-ci').value.trim(),
+                        direccion: document.getElementById('prest-direccion').value.trim(),
+                        ubicacion: document.getElementById('prest-ubicacion').value.trim()
+                    };
+
+                    prestamoId = crearPrestatario(prestatario);
+                    cargarSelectPrestatarios();
+                }
+
+                // Manejar Prestamista
+                const tipoPrestamista = document.querySelector('input[name="tipo-prestamista"]:checked').value;
+                if (tipoPrestamista === 'existente') {
+                    prestamisustaId = parseInt(document.getElementById('select-prestamista-existente').value);
+                    if (!prestamisustaId) {
+                        showAlert('Selecciona un prestamista existente', 'error');
+                        return;
+                    }
+                } else {
+                    const nombrePrestamista = document.getElementById('prest-prestamista-nombre').value.trim();
+                    if (!nombrePrestamista) {
+                        showAlert('El nombre del prestamista es obligatorio', 'error');
+                        return;
+                    }
+
+                    const telPrestamistaNuevo = document.getElementById('prest-prestamista-tel').value.trim();
+                    const notasPrestamistaNuevo = document.getElementById('prest-prestamista-notas').value.trim();
+
+                    const dbActualizado = getDB();
+                    dbActualizado.prestamistas.push({
+                        id: Date.now(),
+                        nombre: nombrePrestamista,
+                        telefono: telPrestamistaNuevo,
+                        notas: notasPrestamistaNuevo
+                    });
+
+                    prestamisustaId = dbActualizado.prestamistas[dbActualizado.prestamistas.length - 1].id;
+                    saveDB(dbActualizado);
+                    guardarPrestamista_Google(nombrePrestamista, telPrestamistaNuevo, notasPrestamistaNuevo);
+                    cargarSelectPrestamistas();
+                }
+
+                // Validar monto e interés
+                const monto = parseFloat(document.getElementById('prest-monto').value);
+                const interes = parseFloat(document.getElementById('prest-interes').value);
+                const fechaInicio = document.getElementById('prest-fecha-inicio').value;
+                const fecha = document.getElementById('prest-fecha').value;
+
+                if (!monto || monto <= 0) {
+                    showAlert('El monto debe ser mayor a 0', 'error');
+                    return;
+                }
+
+                if (!interes || interes < 0) {
+                    showAlert('Ingresa un interés válido', 'error');
+                    return;
+                }
+
+                if (!fechaInicio) {
+                    showAlert('Selecciona una fecha de inicio', 'error');
+                    return;
+                }
+
+                if (!fecha) {
+                    showAlert('Selecciona una fecha de primer pago', 'error');
+                    return;
+                }
+
+                // Crear préstamo
+                const prestamo = {
+                    prestatario_id: prestamoId,
+                    prestamista_id: prestamisustaId,
+                    monto,
+                    interes,
+                    fecha_inicio: fechaInicio,
+                    fecha,
+                    notas: document.getElementById('prest-notas').value.trim(),
+                    gar_nombre: document.getElementById('gar-nombre').value.trim(),
+                    gar_telefono: document.getElementById('gar-telefono').value.trim(),
+                    gar_direccion: document.getElementById('gar-direccion').value.trim()
+                };
+
+                try {
+                    crearPrestamo(prestamo);
+                    showAlert('✅ Préstamo creado correctamente');
+
+                    // Resetear formulario
+                    document.getElementById('form-prestamo').reset();
+                    document.querySelector('input[name="tipo-prestatario"][value="existente"]').checked = true;
+                    document.querySelector('input[name="tipo-garante"][value="sin-garante"]').checked = true;
+                    document.querySelector('input[name="tipo-prestamista"][value="existente"]').checked = true;
+                    togglePrestatarioOption();
+                    toggleGaranteOption();
+                    togglePrestamisustaOption();
+
+                    cargarSelectPrestatarios();
+                    cargarSelectPrestamistas();
+                    cargarSelectPagos();
+                    actualizarDashboard();
+                    switchTab('prestamos');
+                } catch (error) {
+                    console.error('Error al crear préstamo:', error);
+                    showAlert('❌ Error al crear el préstamo: ' + error.message, 'error');
+                }
+            });
+        }
+
+        window.addEventListener('load', inicializar);
+    </script>
+</body>
+</html>

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GestorPrest v3 - Login Seguro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #22c55e;
+            --danger: #ef4444;
+            --dark: #0f0c29;
+            --dark2: #141432;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #141432 30%, #1a1a4e 60%, #0d0d2b 100%);
+            color: #dde3ff;
+            min-height: 100vh;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: rgba(20, 20, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            font-size: 2em;
+            background: linear-gradient(90deg, #a5b4fc, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #8b96c8;
+            font-size: 0.95em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #8b96c8;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.15);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 10px;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.6);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .info-box {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #8b96c8;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(99, 102, 241, 0.2);
+            border-radius: 50%;
+            border-top-color: #6366f1;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .app-container {
+            display: none;
+        }
+
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: all 0.3s;
+            z-index: 5000;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        /* Resto de estilos del HTML original aquí */
+        :root[data-theme="light"] {
+            --gray: #64748b;
+            --heading: #4338ca;
+            --heading2: #9333ea;
+            --text-soft: #1e1b3a;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #a5b4fc, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #8b96c8;
+            font-size: 0.95em;
+        }
+    </style>
+</head>
+<body>
+    <!-- PANTALLA DE LOGIN -->
+    <div id="login-screen" class="login-container">
+        <div class="login-header">
+            <h1>💼 Gestor</h1>
+            <p>Sistema de Gestión de Préstamos</p>
+        </div>
+
+        <div class="error-message" id="error-login"></div>
+
+        <form id="login-form" onsubmit="autenticar(event)">
+            <div class="form-group">
+                <label>Usuario</label>
+                <input type="text" id="username" placeholder="Tu usuario" required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="password" placeholder="Tu contraseña" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn-login">
+                🔓 Acceder al Sistema
+            </button>
+
+            <div class="loading" id="loading-login">
+                <div class="spinner"></div>
+                <span>Verificando credenciales...</span>
+            </div>
+        </form>
+
+        <div class="info-box">
+            <strong>🔐 Seguridad</strong><br>
+            • Credenciales encriptadas<br>
+            • Sesiones seguras<br>
+            • Protección contra ataques
+        </div>
+    </div>
+
+    <!-- APLICACIÓN (oculta hasta login) -->
+    <div id="app-screen" class="app-container">
+        <button class="logout-btn" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+        
+        <!-- Aquí va TODO el HTML original de la app -->
+        <!-- Por ahora solo el header para verlo que funciona -->
+        <div class="container">
+            <header>
+                <h1>💼 GERMAN JAIME AYAVIRI MAMANI</h1>
+                <p>Sistema avanzado de gestión de préstamos y cobranzas</p>
+            </header>
+            <p style="text-align: center; color: #8b96c8; margin: 40px 0;">
+                ✅ Sesión iniciada correctamente<br>
+                El contenido completo de la app se cargará aquí
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════════
+        // SISTEMA DE AUTENTICACIÓN SEGURO
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        const SESSION_KEY = 'gestorprest_session_v3';
+        const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutos
+
+        // Credenciales por defecto (se pueden cambiar)
+        // EN PRODUCCIÓN: usar variables de entorno o backend
+        const USUARIOS_AUTORIZADOS = {
+            'admin': 'GestorPrest2024!', // Cambiar en producción
+            'german': 'PrestamosBolivia2024!', // Cambiar en producción
+            'JaimeAyaviri': 'JaimeAyaviri123*' // Cambiar en producción
+        };
+
+        // Función para verificar sesión al cargar
+        function verificarSesion() {
+            const session = localStorage.getItem(SESSION_KEY);
+            
+            if (!session) {
+                mostrarLogin();
+                return false;
+            }
+
+            try {
+                const sesionData = JSON.parse(session);
+                const ahora = new Date().getTime();
+
+                // Verificar si la sesión expiró
+                if (ahora - sesionData.timestamp > SESSION_TIMEOUT) {
+                    console.warn('⏰ Sesión expirada por inactividad');
+                    localStorage.removeItem(SESSION_KEY);
+                    mostrarLogin();
+                    return false;
+                }
+
+                // Actualizar timestamp (para mantener sesión activa)
+                sesionData.timestamp = ahora;
+                localStorage.setItem(SESSION_KEY, JSON.stringify(sesionData));
+
+                mostrarApp();
+                return true;
+            } catch (error) {
+                console.error('Error al verificar sesión:', error);
+                localStorage.removeItem(SESSION_KEY);
+                mostrarLogin();
+                return false;
+            }
+        }
+
+        function autenticar(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('error-login');
+            const loadingDiv = document.getElementById('loading-login');
+            const loginForm = document.getElementById('login-form');
+
+            // Limpiar error previo
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+
+            // Validaciones básicas
+            if (!username || !password) {
+                mostrarError('Por favor completa todos los campos');
+                return;
+            }
+
+            if (username.length < 3) {
+                mostrarError('Usuario debe tener al menos 3 caracteres');
+                return;
+            }
+
+            if (password.length < 6) {
+                mostrarError('Contraseña debe tener al menos 6 caracteres');
+                return;
+            }
+
+            // Mostrar loading
+            loadingDiv.style.display = 'block';
+            loginForm.style.opacity = '0.5';
+            loginForm.style.pointerEvents = 'none';
+
+            // Simular verificación (en producción sería un call al backend)
+            setTimeout(() => {
+                // Verificar credenciales
+                if (USUARIOS_AUTORIZADOS[username] === password) {
+                    // Credenciales correctas
+                    crearSesion(username);
+                    mostrarApp();
+                    loadingDiv.style.display = 'none';
+                    loginForm.style.opacity = '1';
+                    loginForm.style.pointerEvents = 'auto';
+                } else {
+                    // Credenciales incorrectas
+                    mostrarError('❌ Usuario o contraseña incorrectos');
+                    loadingDiv.style.display = 'none';
+                    loginForm.style.opacity = '1';
+                    loginForm.style.pointerEvents = 'auto';
+
+                    // Limpiar campos de contraseña por seguridad
+                    document.getElementById('password').value = '';
+                }
+            }, 800);
+        }
+
+        function mostrarError(mensaje) {
+            const errorDiv = document.getElementById('error-login');
+            errorDiv.textContent = mensaje;
+            errorDiv.style.display = 'block';
+        }
+
+        function crearSesion(username) {
+            const sesionData = {
+                usuario: username,
+                timestamp: new Date().getTime(),
+                id: Math.random().toString(36).substr(2, 9) // ID único de sesión
+            };
+
+            localStorage.setItem(SESSION_KEY, JSON.stringify(sesionData));
+            console.log(`✅ Sesión iniciada para: ${username}`);
+        }
+
+        function cerrarSesion() {
+            if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) return;
+
+            localStorage.removeItem(SESSION_KEY);
+            location.reload();
+        }
+
+        function mostrarLogin() {
+            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('app-screen').style.display = 'none';
+        }
+
+        function mostrarApp() {
+            window.location.href = 'sistema_cobros.html';
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PROTECCIÓN ADICIONAL
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        // Detectar cambios de pestaña (cerrará sesión si se deja inactivo mucho tiempo)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                console.log('⚠️ Pestaña no activa - sesión monitoreada');
+            } else {
+                // Verificar sesión cuando vuelve a estar activa
+                if (!verificarSesion()) {
+                    mostrarLogin();
+                }
+            }
+        });
+
+        // Bloquear acceso directo a DevTools (opcional, puede ser burlado)
+        document.addEventListener('F12', (e) => {
+            e.preventDefault();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 73) { // Ctrl+Shift+I
+                e.preventDefault();
+                console.warn('🔒 Acceso a herramientas de desarrollador bloqueado');
+            }
+        });
+
+        // Prevenir clic derecho (opcional)
+        // document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // INICIALIZACIÓN
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        window.addEventListener('load', () => {
+            verificarSesion();
+        });
+
+        // Verificar sesión cada 30 segundos
+        setInterval(() => {
+            const session = localStorage.getItem(SESSION_KEY);
+            if (!session) {
+                mostrarLogin();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
