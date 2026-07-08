@@ -1506,17 +1506,22 @@
         }
 
         // ═══════════════════════════════════════════════════════════════════════════
-        // INTEGRACIÓN CON GOOGLE SHEETS (respaldo en la nube)
+        // INTEGRACIÓN CON GOOGLE SHEETS (sincronización real, no solo respaldo)
         //
-        // localStorage sigue siendo la fuente de datos de la app: todo funciona igual
-        // aunque falle o esté desconectado el respaldo. Cada creación (prestamista,
-        // prestatario, préstamo, pago) también se envía a la hoja de cálculo.
-        // NOTA: esto es solo un respaldo de un sentido (local → Sheets). Editar o
-        // eliminar registros NO se refleja en la hoja porque el Apps Script actual
-        // no tiene acciones para eso.
+        // Cada dispositivo tiene su propio localStorage, así que Google Sheets es la
+        // única fuente compartida entre PC y celular. Al crear/editar/eliminar algo
+        // se envía a la hoja con el mismo ID que se usa localmente (upsert por ID),
+        // y al abrir la página (o volver a la pestaña) se trae todo desde la hoja y
+        // se combina con lo local. Los préstamos usan ACTUALIZADO_EN para que, si el
+        // mismo préstamo cambió en dos dispositivos, gane el cambio más reciente.
+        //
+        // Limitación conocida: si un dispositivo borra algo estando offline, ese
+        // borrado no llega a la hoja hasta que ese mismo dispositivo tenga conexión;
+        // otros dispositivos que ya tenían ese registro sincronizado no lo pierden
+        // automáticamente (para evitar borrar datos por error en vez de por sync).
         // ═══════════════════════════════════════════════════════════════════════════
 
-        const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzW-o6-M31yGmpeZA2Nu8i0E9J3Y6IVY8Lslc9FhIfujXl_5QDGN0gui3NnN6RBLDsN/exec";
+        const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx5p6FOXKmpP5oC1qpkgo8uZaLw-E-6FwrE1hiXIG-1p8chX0QXD8QhOuf4JRZ4O0PY/exec";
         const USAR_GOOGLE_SHEETS = true;
 
         async function enviarAGoogleSheets(payload) {
@@ -1534,23 +1539,29 @@
             }
         }
 
-        async function guardarPrestamista_Google(nombre, telefono, notas) {
+        async function guardarPrestamista_Google(id, nombre, telefono, notas) {
             const resultado = await enviarAGoogleSheets({
                 accion: 'guardarPrestamista',
+                id,
                 nombre,
                 telefono: telefono || '',
                 nota: notas || ''
             });
             if (resultado && (resultado.exito || resultado.id)) {
-                console.log('✅ Prestamista respaldado en Google Sheets');
+                console.log('✅ Prestamista sincronizado con Google Sheets');
             } else if (resultado) {
-                console.error('❌ Error al respaldar prestamista:', resultado.error);
+                console.error('❌ Error al sincronizar prestamista:', resultado.error);
             }
         }
 
-        async function guardarPrestatario_Google(nombre, telefono, ci, direccion, ubicacion) {
+        async function eliminarPrestamista_Google(id) {
+            await enviarAGoogleSheets({ accion: 'eliminarPrestamista', id });
+        }
+
+        async function guardarPrestatario_Google(id, nombre, telefono, ci, direccion, ubicacion) {
             const resultado = await enviarAGoogleSheets({
                 accion: 'guardarPrestatario',
+                id,
                 nombre,
                 telefono: telefono || '',
                 ci: ci || '',
@@ -1558,57 +1569,180 @@
                 ubicacion: ubicacion || ''
             });
             if (resultado && (resultado.exito || resultado.id)) {
-                console.log('✅ Prestatario respaldado en Google Sheets');
+                console.log('✅ Prestatario sincronizado con Google Sheets');
             } else if (resultado) {
-                console.error('❌ Error al respaldar prestatario:', resultado.error);
+                console.error('❌ Error al sincronizar prestatario:', resultado.error);
             }
         }
 
-        async function guardarPrestamo_Google(datos) {
+        async function eliminarPrestatario_Google(id) {
+            await enviarAGoogleSheets({ accion: 'eliminarPrestatario', id });
+        }
+
+        async function sincronizarPrestamoConGoogle(prestamo, db) {
+            const prestatario = db.prestatarios.find(p => p.id === prestamo.prestatario_id);
             const resultado = await enviarAGoogleSheets({
                 accion: 'guardarPrestamo',
-                nombre: datos.nombrePrestatario || 'Usuario',
-                monto: datos.monto,
-                interes: datos.interes,
-                tiempo: datos.tiempo || '',
-                fechaInicio: datos.fechaInicio,
-                fechaProximoPago: datos.fechaProximoPago
+                id: prestamo.id,
+                nombre: prestatario ? prestatario.nombre : 'Usuario',
+                monto: prestamo.monto_original,
+                interes: prestamo.tasa_interes_mensual,
+                tiempo: '',
+                fechaInicio: prestamo.fecha_inicio,
+                fechaProximoPago: prestamo.fecha_proximo_pago,
+                prestatarioId: prestamo.prestatario_id,
+                prestamistaId: prestamo.prestamista_id,
+                estado: prestamo.estado,
+                capitalPendiente: prestamo.capital_pendiente,
+                interesAcumulado: prestamo.interes_acumulado,
+                notas: prestamo.notas,
+                garantiaNombre: prestamo.garantia_nombre,
+                garantiaTelefono: prestamo.garantia_telefono,
+                garantiaDireccion: prestamo.garantia_direccion
             });
             if (resultado && (resultado.exito || resultado.id)) {
-                console.log('✅ Préstamo respaldado en Google Sheets');
+                console.log('✅ Préstamo sincronizado con Google Sheets');
             } else if (resultado) {
-                console.error('❌ Error al respaldar préstamo:', resultado.error);
+                console.error('❌ Error al sincronizar préstamo:', resultado.error);
             }
         }
 
-        async function guardarPago_Google(prestamoId, prestatario, monto, fechaPago) {
+        async function eliminarPrestamo_Google(id) {
+            await enviarAGoogleSheets({ accion: 'eliminarPrestamo', id });
+        }
+
+        async function guardarPago_Google(pago, prestatarioNombre, fechaVencimiento) {
             const resultado = await enviarAGoogleSheets({
                 accion: 'guardarPago',
-                prestamoId,
-                prestatario,
-                montoAPagar: monto,
+                id: pago.id,
+                prestamoId: pago.prestamo_id,
+                prestatario: prestatarioNombre,
+                fechaVencimiento: fechaVencimiento || '',
+                montoAPagar: pago.monto,
                 estado: 'Pagado',
-                fechaPago,
-                montoPagado: monto
+                fechaPago: pago.fecha,
+                montoPagado: pago.monto
             });
             if (resultado && (resultado.exito || resultado.mensaje)) {
-                console.log('✅ Pago respaldado en Google Sheets');
+                console.log('✅ Pago sincronizado con Google Sheets');
             } else if (resultado) {
-                console.error('❌ Error al respaldar pago:', resultado.error);
+                console.error('❌ Error al sincronizar pago:', resultado.error);
             }
         }
 
-        async function verificarConexionGoogleSheets() {
-            if (!USAR_GOOGLE_SHEETS) {
-                console.log('⚠️ Respaldo en Google Sheets desactivado.');
-                return;
+        async function eliminarPago_Google(id) {
+            await enviarAGoogleSheets({ accion: 'eliminarPago', id });
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // LECTURA / SINCRONIZACIÓN AL ABRIR
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        async function cargarDatosDesdeGoogleSheets() {
+            if (!USAR_GOOGLE_SHEETS) return false;
+
+            const resultado = await enviarAGoogleSheets({ accion: 'obtenerTodo' });
+            if (!resultado || resultado.error) {
+                console.warn('⚠️ No se pudo sincronizar con Google Sheets:', resultado && resultado.error);
+                return false;
             }
-            const resultado = await enviarAGoogleSheets({ accion: 'obtenerPrestamistas' });
-            if (resultado) {
-                console.log('✅ Conexión con Google Sheets verificada');
-            } else {
-                console.warn('⚠️ No se pudo conectar con Google Sheets. Revisa que el Apps Script esté implementado con acceso "Cualquier usuario".');
-            }
+
+            const db = getDB();
+            let huboCambios = false;
+
+            (resultado.prestamistas || []).forEach(remoto => {
+                if (!db.prestamistas.find(p => p.id === remoto.id)) {
+                    db.prestamistas.push({ id: remoto.id, nombre: remoto.nombre, telefono: remoto.telefono, notas: remoto.nota });
+                    huboCambios = true;
+                }
+            });
+
+            (resultado.prestatarios || []).forEach(remoto => {
+                if (!db.prestatarios.find(p => p.id === remoto.id)) {
+                    db.prestatarios.push({
+                        id: remoto.id, nombre: remoto.nombre, telefono: remoto.telefono,
+                        ci: remoto.ci, direccion: remoto.direccion, ubicacion: remoto.ubicacion
+                    });
+                    huboCambios = true;
+                }
+            });
+
+            (resultado.prestamos || []).forEach(remoto => {
+                const local = db.prestamos.find(p => p.id === remoto.id);
+                if (!local) {
+                    let prestatarioId = remoto.prestatarioId || null;
+                    if (!prestatarioId) {
+                        // Préstamo guardado antes de esta actualización: no tiene el ID del
+                        // prestatario en la hoja, así que se busca o se crea por nombre.
+                        let p = db.prestatarios.find(x => x.nombre === remoto.nombre);
+                        if (!p) {
+                            p = { id: Date.now() + Math.floor(Math.random() * 1000), nombre: remoto.nombre, telefono: '', ci: '', direccion: '', ubicacion: '' };
+                            db.prestatarios.push(p);
+                        }
+                        prestatarioId = p.id;
+                    }
+
+                    db.prestamos.push({
+                        id: remoto.id,
+                        prestatario_id: prestatarioId,
+                        prestamista_id: remoto.prestamistaId || null,
+                        monto_original: parseFloat(remoto.monto) || 0,
+                        capital_pendiente: parseFloat(remoto.capitalPendiente) || 0,
+                        tasa_interes_mensual: parseFloat(remoto.interes) || 0,
+                        fecha_inicio: remoto.fechaInicio || '',
+                        fecha_proximo_pago: remoto.fechaProximoPago || '',
+                        estado: remoto.estado || 'activo',
+                        interes_acumulado: parseFloat(remoto.interesAcumulado) || 0,
+                        notas: remoto.notas || '',
+                        garantia_nombre: remoto.garantiaNombre || '',
+                        garantia_telefono: remoto.garantiaTelefono || '',
+                        garantia_direccion: remoto.garantiaDireccion || '',
+                        actualizado_en: remoto.actualizadoEn || 0
+                    });
+                    huboCambios = true;
+                } else if (remoto.actualizadoEn && remoto.actualizadoEn > (local.actualizado_en || 0)) {
+                    // Otro dispositivo pagó/editó este préstamo después que este
+                    local.capital_pendiente = parseFloat(remoto.capitalPendiente) || 0;
+                    local.interes_acumulado = parseFloat(remoto.interesAcumulado) || 0;
+                    local.estado = remoto.estado || local.estado;
+                    local.fecha_proximo_pago = remoto.fechaProximoPago || local.fecha_proximo_pago;
+                    local.actualizado_en = remoto.actualizadoEn;
+                    huboCambios = true;
+                }
+            });
+
+            (resultado.pagos || []).forEach(remoto => {
+                if (!remoto.id) return; // pagos guardados antes de esta actualización, sin ID: no se pueden fusionar de forma segura
+                if (!db.pagos.find(p => p.id === remoto.id)) {
+                    db.pagos.push({
+                        id: remoto.id,
+                        prestamo_id: remoto.prestamoId,
+                        monto: parseFloat(remoto.montoPagado || remoto.montoAPagar) || 0,
+                        capital_pagado: 0,
+                        interes_pagado: 0,
+                        mora_pagada: 0,
+                        interes_acumulado_previo: 0,
+                        fecha: remoto.fechaPago || '',
+                        metodo: '',
+                        notas: ''
+                    });
+                    huboCambios = true;
+                }
+            });
+
+            if (huboCambios) saveDB(db);
+            return huboCambios;
+        }
+
+        function refrescarUI() {
+            actualizarDashboard();
+            cargarSelectPrestamistas();
+            cargarSelectPrestatarios();
+            cargarSelectPagos();
+            cargarListaPrestamistas();
+            cargarListaPrestatarios();
+            cargarHistorialPagos();
+            cargarPrestamos(filtroActual);
         }
 
         // ═══════════════════════════════════════════════════════════════════════════
@@ -1694,20 +1828,14 @@
                 notas: datos.notas,
                 garantia_nombre: datos.gar_nombre || '',
                 garantia_telefono: datos.gar_telefono || '',
-                garantia_direccion: datos.gar_direccion || ''
+                garantia_direccion: datos.gar_direccion || '',
+                actualizado_en: Date.now()
             };
 
             db.prestamos.push(newPrestamo);
             saveDB(db);
 
-            const prestatarioDelPrestamo = db.prestatarios.find(p => p.id === newPrestamo.prestatario_id);
-            guardarPrestamo_Google({
-                nombrePrestatario: prestatarioDelPrestamo ? prestatarioDelPrestamo.nombre : 'Usuario',
-                monto: newPrestamo.monto_original,
-                interes: newPrestamo.tasa_interes_mensual,
-                fechaInicio: newPrestamo.fecha_inicio,
-                fechaProximoPago: newPrestamo.fecha_proximo_pago
-            });
+            sincronizarPrestamoConGoogle(newPrestamo, db);
 
             return newPrestamo.id;
         }
@@ -1726,7 +1854,7 @@
             });
 
             saveDB(db);
-            guardarPrestatario_Google(datos.nombre, datos.telefono, datos.ci, datos.direccion, datos.ubicacion);
+            guardarPrestatario_Google(id, datos.nombre, datos.telefono, datos.ci, datos.direccion, datos.ubicacion);
             return id;
         }
 
@@ -1741,15 +1869,16 @@
                 return;
             }
 
+            const id = Date.now();
             db.prestamistas.push({
-                id: Date.now(),
+                id,
                 nombre,
                 telefono: tel,
                 notas
             });
 
             saveDB(db);
-            guardarPrestamista_Google(nombre, tel, notas);
+            guardarPrestamista_Google(id, nombre, tel, notas);
             showAlert(`✅ Prestamista "${nombre}" creado`);
 
             document.getElementById('config-prest-nombre').value = '';
@@ -1943,6 +2072,7 @@
                 p.direccion = document.getElementById('edit-direccion').value.trim();
                 p.ubicacion = document.getElementById('edit-ubicacion').value.trim();
                 saveDB(db);
+                guardarPrestatario_Google(p.id, p.nombre, p.telefono, p.ci, p.direccion, p.ubicacion);
                 cargarSelectPrestatarios();
                 cargarListaPrestatarios();
                 cargarPrestamos(filtroActual);
@@ -1953,6 +2083,7 @@
                 p.telefono = document.getElementById('edit-telefono').value.trim();
                 p.notas = document.getElementById('edit-notas').value.trim();
                 saveDB(db);
+                guardarPrestamista_Google(p.id, p.nombre, p.telefono, p.notas);
                 cargarSelectPrestamistas();
                 cargarListaPrestamistas();
                 cargarPrestamos(filtroActual);
@@ -1976,6 +2107,7 @@
 
             db.prestatarios = db.prestatarios.filter(x => x.id !== id);
             saveDB(db);
+            eliminarPrestatario_Google(id);
             showAlert('Prestatario eliminado');
             cargarSelectPrestatarios();
             cargarListaPrestatarios();
@@ -1995,6 +2127,7 @@
 
             db.prestamistas = db.prestamistas.filter(x => x.id !== id);
             saveDB(db);
+            eliminarPrestamista_Google(id);
             showAlert('Prestamista eliminado');
             cargarSelectPrestamistas();
             cargarListaPrestamistas();
@@ -2067,7 +2200,8 @@
                 }
             }
 
-            db.pagos.push({
+            const fechaVencimientoOriginal = prestamo.fecha_proximo_pago;
+            const nuevoPago = {
                 id: Date.now(),
                 prestamo_id: prestamoId,
                 monto,
@@ -2078,7 +2212,8 @@
                 fecha,
                 metodo: document.getElementById('pago-metodo').value,
                 notas: document.getElementById('pago-notas').value
-            });
+            };
+            db.pagos.push(nuevoPago);
 
             prestamo.capital_pendiente -= capitalPagado;
             prestamo.interes_acumulado = nuevoInteresAcumulado;
@@ -2090,11 +2225,13 @@
                 prestamo.estado = 'pagado';
                 prestamo.capital_pendiente = 0;
             }
+            prestamo.actualizado_en = Date.now();
 
             saveDB(db);
 
             const prestatarioDelPago = db.prestatarios.find(p => p.id === prestamo.prestatario_id);
-            guardarPago_Google(prestamoId, prestatarioDelPago ? prestatarioDelPago.nombre : 'Usuario', monto, fecha);
+            guardarPago_Google(nuevoPago, prestatarioDelPago ? prestatarioDelPago.nombre : 'Usuario', fechaVencimientoOriginal);
+            sincronizarPrestamoConGoogle(prestamo, db);
 
             showAlert('✅ Pago registrado correctamente');
 
@@ -2237,8 +2374,14 @@
                 prestamo.estado = 'pagado';
                 prestamo.capital_pendiente = 0;
             }
+            prestamo.actualizado_en = Date.now();
 
             saveDB(db);
+
+            const prestatarioDelPago = db.prestatarios.find(p => p.id === prestamo.prestatario_id);
+            guardarPago_Google(pago, prestatarioDelPago ? prestatarioDelPago.nombre : 'Usuario', prestamo.fecha_proximo_pago);
+            sincronizarPrestamoConGoogle(prestamo, db);
+
             showAlert('✅ Pago actualizado correctamente');
             cerrarModalEditarPago();
 
@@ -2256,8 +2399,13 @@
             if (!confirm('¿Eliminar este pago? Se revertirá el capital y la fecha de próximo pago del préstamo.')) return;
 
             revertirPagoDePrestamo(pago, db);
+            const prestamo = db.prestamos.find(p => p.id === pago.prestamo_id);
+            if (prestamo) prestamo.actualizado_en = Date.now();
             db.pagos = db.pagos.filter(p => p.id !== pagoId);
             saveDB(db);
+
+            eliminarPago_Google(pagoId);
+            if (prestamo) sincronizarPrestamoConGoogle(prestamo, db);
 
             showAlert('Pago eliminado');
             cargarHistorialPagos();
@@ -2353,6 +2501,8 @@
             db.prestamos = db.prestamos.filter(p => p.id !== prestamoActual);
             db.pagos = db.pagos.filter(pg => pg.prestamo_id !== prestamoActual);
             saveDB(db);
+
+            eliminarPrestamo_Google(prestamoActual);
 
             showAlert('Préstamo eliminado');
             cerrarModal();
@@ -3159,8 +3309,6 @@
         function inicializar() {
             const db = getDB();
 
-            verificarConexionGoogleSheets();
-
             // Cargar selectores
             cargarSelectPrestamistas();
             cargarSelectPagos();
@@ -3243,16 +3391,17 @@
                     const notasPrestamistaNuevo = document.getElementById('prest-prestamista-notas').value.trim();
 
                     const dbActualizado = getDB();
+                    const idPrestamistaNuevo = Date.now();
                     dbActualizado.prestamistas.push({
-                        id: Date.now(),
+                        id: idPrestamistaNuevo,
                         nombre: nombrePrestamista,
                         telefono: telPrestamistaNuevo,
                         notas: notasPrestamistaNuevo
                     });
 
-                    prestamisustaId = dbActualizado.prestamistas[dbActualizado.prestamistas.length - 1].id;
+                    prestamisustaId = idPrestamistaNuevo;
                     saveDB(dbActualizado);
-                    guardarPrestamista_Google(nombrePrestamista, telPrestamistaNuevo, notasPrestamistaNuevo);
+                    guardarPrestamista_Google(idPrestamistaNuevo, nombrePrestamista, telPrestamistaNuevo, notasPrestamistaNuevo);
                     cargarSelectPrestamistas();
                 }
 
@@ -3321,8 +3470,17 @@
             });
         }
 
-     window.addEventListener('load', inicializarConSincronizacion);    </script>
-    <!-- Sincronización con Google Sheets -->
-<script src="sincronizacion_google_sheets.js"></script>
+        window.addEventListener('load', async function() {
+            await cargarDatosDesdeGoogleSheets();
+            inicializar();
+        });
+
+        document.addEventListener('visibilitychange', async function() {
+            if (!document.hidden) {
+                const huboCambios = await cargarDatosDesdeGoogleSheets();
+                if (huboCambios) refrescarUI();
+            }
+        });
+    </script>
 </body>
 </html>
